@@ -17,8 +17,8 @@ export function AuthScreen() {
           ? await db.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } })
           : await db.auth.signInWithPassword({ email, password });
       if (result.error) throw result.error;
-      if (mode === 'reset') setMessage('Check your email for a password reset link.');
-      else if (mode === 'up') setMessage('Account created. Check your email if confirmation is required.');
+      if (mode === 'reset') setMessage('If this address has an account, a password reset link will arrive if email delivery is available.');
+      else if (mode === 'up') setMessage('If this is a new account, check your email for a confirmation link. If you have signed up before, sign in with your existing password instead.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not complete sign in.'); }
     finally { setBusy(false); }
   }
@@ -27,6 +27,7 @@ export function AuthScreen() {
     <section className="card pad auth-card">
       <h2>{mode === 'reset' ? 'Reset your password' : mode === 'up' ? 'Create your account' : 'Welcome back'}</h2>
       <p className="muted">Your supplier, delivery and claim records are private to your account.</p>
+      {mode === 'up' && <p className="muted">Already use this email? Sign in with your existing password. Creating the account again will not send another confirmation email.</p>}
       <form onSubmit={submit}>
         <label className="field-label">Email<input className="password-input" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} /></label>
         {mode !== 'reset' && <label className="field-label">Password<input className="password-input" type="password" minLength={8} autoComplete={mode === 'up' ? 'new-password' : 'current-password'} required value={password} onChange={e => setPassword(e.target.value)} /></label>}
