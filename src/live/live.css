@@ -9,6 +9,7 @@
 .auth-actions { display:flex; flex-wrap:wrap; gap:16px; margin-top:20px; }
 .auth-actions button, .account-strip button, .mini-action { color:var(--green); font-weight:650; font-size:12px; }
 .auth-message { font-size:13px; margin-top:14px; color:var(--green); }
+.auth-message.error-text { color:var(--red); }
 .account-strip { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:14px; }
 .account-strip select { max-width:72%; background:var(--card); }
 .account-strip select, .row select, .modal input, .modal select { padding:8px 10px; border:1px solid var(--line-2); border-radius:9px; color:var(--ink); background:var(--card); font:inherit; }
