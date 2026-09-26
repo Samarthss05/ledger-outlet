@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { needClient } from './supabase';
+import { authRedirectUrl, needClient } from './supabase';
+import { ThemeToggle } from './ThemeToggle';
 
 export function AuthScreen() {
   const [mode, setMode] = useState<'in' | 'up' | 'reset'>('in');
@@ -13,9 +14,9 @@ export function AuthScreen() {
     try {
       const db = needClient();
       const result = mode === 'reset'
-        ? await db.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+        ? await db.auth.resetPasswordForEmail(email, { redirectTo: authRedirectUrl })
         : mode === 'up'
-          ? await db.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } })
+          ? await db.auth.signUp({ email, password, options: { emailRedirectTo: authRedirectUrl } })
           : await db.auth.signInWithPassword({ email, password });
       if (result.error) throw result.error;
       if (mode === 'reset') setMessage('If this address has an account, a password reset link will arrive if email delivery is available.');
@@ -28,7 +29,7 @@ export function AuthScreen() {
     finally { setBusy(false); }
   }
   return <main className="app auth-wrap">
-    <div className="auth-brand"><div className="logo">LO</div><div><h1>Ledger Outlet</h1><p>Every delivery accounted for.</p></div></div>
+    <div className="auth-brand"><div className="logo">LO</div><div><h1>Ledger Outlet</h1><p>Every delivery accounted for.</p></div><ThemeToggle /></div>
     <section className="card pad auth-card">
       <h2>{mode === 'reset' ? 'Reset your password' : mode === 'up' ? 'Create your account' : 'Welcome back'}</h2>
       <p className="muted">Your supplier, delivery and claim records are private to your account.</p>

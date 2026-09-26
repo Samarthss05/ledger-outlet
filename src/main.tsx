@@ -3,4 +3,5 @@ import { createRoot } from 'react-dom/client';
 import App from './live/LiveApp';
 import './original.css';
 import './styles.css';
+import './theme.css';
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);
