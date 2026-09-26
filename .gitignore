@@ -9,3 +9,4 @@ supabase/.temp/
 *.log
 .vercel
 .env*
+!.env.example
