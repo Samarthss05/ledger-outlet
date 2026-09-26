@@ -1,0 +1,37 @@
+{
+  "name": "ledger-outlet",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:web\" \"npm:dev:api\"",
+    "dev:web": "vite --host 0.0.0.0",
+    "dev:api": "tsx watch server/index.ts",
+    "build": "tsc --noEmit && vite build && esbuild server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-server/index.js",
+    "start": "node dist-server/index.js"
+  },
+  "dependencies": {
+    "@fastify/static": "^10.1.5",
+    "@supabase/supabase-js": "2.117.2",
+    "dotenv": "^16.6.1",
+    "fastify": "^5.12.5",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vercel/node": "16.0.1",
+    "@vitejs/plugin-react": "^5.1.0",
+    "concurrently": "^9.2.1",
+    "esbuild": "^0.27.0",
+    "tsx": "^4.20.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1"
+  }
+}

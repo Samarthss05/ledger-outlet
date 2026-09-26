@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "lib": ["ES2023", "DOM"], "module": "ESNext", "moduleResolution": "Bundler",
+    "jsx": "react-jsx", "strict": true, "noEmit": true, "resolveJsonModule": true,
+    "esModuleInterop": true, "skipLibCheck": true, "types": ["node", "vite/client"]
+  },
+  "include": ["src", "server", "shared", "api", "vite.config.ts"]
+}

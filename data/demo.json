@@ -1,0 +1,2759 @@
+{
+  "suppliers": {
+    "ah_seng": {
+      "name": "Ah Seng Vegetables",
+      "short": "Ah Seng",
+      "init": "AS",
+      "contact": "Seng",
+      "cutoff": "4:00pm",
+      "cutH": 16,
+      "days": [
+        1,
+        3,
+        5
+      ],
+      "dayTxt": "Mon, Wed, Fri",
+      "terms": "Cash on delivery",
+      "cats": "Vegetables"
+    },
+    "hup_lee": {
+      "name": "Hup Lee Poultry",
+      "short": "Hup Lee",
+      "init": "HL",
+      "contact": "Mr Tan",
+      "cutoff": "9:00pm",
+      "cutH": 21,
+      "days": [
+        2,
+        4,
+        6
+      ],
+      "dayTxt": "Tue, Thu, Sat",
+      "terms": "30 days",
+      "cats": "Poultry & pork"
+    },
+    "sin_huat": {
+      "name": "Sin Huat Provision",
+      "short": "Sin Huat",
+      "init": "SH",
+      "contact": "Ah Boy",
+      "cutoff": "6:00pm",
+      "cutH": 18,
+      "days": [
+        2,
+        6
+      ],
+      "dayTxt": "Tue, Sat",
+      "terms": "14 days",
+      "cats": "Dry goods"
+    }
+  },
+  "items": {
+    "kangkong": {
+      "name": "Kangkong",
+      "unit": "kg",
+      "sup": "ah_seng",
+      "qty": [
+        5,
+        7
+      ],
+      "words": [
+        "kangkong",
+        "kangkung",
+        "water spinach",
+        "kang kong"
+      ]
+    },
+    "chye_sim": {
+      "name": "Chye sim",
+      "unit": "kg",
+      "sup": "ah_seng",
+      "qty": [
+        3,
+        5
+      ],
+      "words": [
+        "chye sim",
+        "choy sum",
+        "chye",
+        "chai sim"
+      ]
+    },
+    "bean_sprout": {
+      "name": "Bean sprouts",
+      "unit": "kg",
+      "sup": "ah_seng",
+      "qty": [
+        2,
+        4
+      ],
+      "words": [
+        "taugeh",
+        "tauge",
+        "bean sprout",
+        "bean sprouts",
+        "sprouts"
+      ]
+    },
+    "chicken_whole": {
+      "name": "Whole chicken",
+      "unit": "bird",
+      "sup": "hup_lee",
+      "qty": [
+        16,
+        20
+      ],
+      "words": [
+        "whole chicken",
+        "chicken",
+        "ayam",
+        "bird"
+      ]
+    },
+    "chicken_midjoint": {
+      "name": "Chicken mid-joint",
+      "unit": "kg",
+      "sup": "hup_lee",
+      "qty": [
+        4,
+        6
+      ],
+      "words": [
+        "mid joint",
+        "midjoint",
+        "mid-joint",
+        "wing",
+        "wings"
+      ]
+    },
+    "pork_belly": {
+      "name": "Pork belly",
+      "unit": "kg",
+      "sup": "hup_lee",
+      "qty": [
+        2,
+        3
+      ],
+      "words": [
+        "sam chan bak",
+        "pork belly",
+        "pork",
+        "samchan"
+      ]
+    },
+    "cooking_oil": {
+      "name": "Cooking oil 5L",
+      "unit": "bottle",
+      "sup": "sin_huat",
+      "qty": [
+        2,
+        3
+      ],
+      "words": [
+        "oil",
+        "cooking oil",
+        "5l",
+        "minyak"
+      ]
+    },
+    "rice_fragrant": {
+      "name": "Thai rice 25kg",
+      "unit": "bag",
+      "sup": "sin_huat",
+      "qty": [
+        2,
+        2
+      ],
+      "words": [
+        "rice",
+        "thai rice",
+        "beras",
+        "fragrant rice"
+      ]
+    },
+    "eggs": {
+      "name": "Eggs, tray of 30",
+      "unit": "tray",
+      "sup": "sin_huat",
+      "qty": [
+        3,
+        4
+      ],
+      "words": [
+        "egg",
+        "eggs",
+        "telur"
+      ]
+    }
+  },
+  "prices": {
+    "kangkong": [
+      1.9,
+      1.85,
+      1.95,
+      1.8,
+      1.7,
+      1.75,
+      1.7,
+      1.65
+    ],
+    "chye_sim": [
+      2.2,
+      2.2,
+      2.3,
+      2.3,
+      2.2,
+      2.25,
+      2.2,
+      2.2
+    ],
+    "bean_sprout": [
+      1.6,
+      1.55,
+      1.6,
+      1.55,
+      1.5,
+      1.55,
+      1.5,
+      1.5
+    ],
+    "chicken_whole": [
+      6.3,
+      6.3,
+      6.4,
+      6.4,
+      6.5,
+      6.5,
+      6.5,
+      6.5
+    ],
+    "chicken_midjoint": [
+      7.6,
+      7.6,
+      7.7,
+      7.7,
+      7.7,
+      7.8,
+      7.8,
+      7.8
+    ],
+    "pork_belly": [
+      11,
+      11,
+      11.2,
+      11.2,
+      11.4,
+      11.4,
+      11.4,
+      11.4
+    ],
+    "cooking_oil": [
+      26.9,
+      26.9,
+      26.9,
+      27.2,
+      27.6,
+      27.6,
+      28.5,
+      28.5
+    ],
+    "rice_fragrant": [
+      41,
+      41,
+      41,
+      42,
+      42,
+      42,
+      42,
+      42
+    ],
+    "eggs": [
+      4.9,
+      5,
+      5.1,
+      5.1,
+      5.2,
+      5.4,
+      5.4,
+      5.4
+    ]
+  },
+  "deliveries": [
+    {
+      "id": "do_55_hup_lee",
+      "date": "2026-09-18T16:00:00.000Z",
+      "off": 55,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 19,
+          "delivered": 19,
+          "charged": 19,
+          "price": 6.5,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 6.5,
+          "delivered": 6.5,
+          "charged": 6.5,
+          "price": 7.8,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 2.5,
+          "delivered": 2.5,
+          "charged": 2.5,
+          "price": 11.4,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 202.7,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_55_sin_huat",
+      "date": "2026-09-18T16:00:00.000Z",
+      "off": 55,
+      "sid": "sin_huat",
+      "lines": [
+        {
+          "id": "cooking_oil",
+          "name": "Cooking oil 5L",
+          "unit": "bottle",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 28.5,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "eggs",
+          "name": "Eggs, tray of 30",
+          "unit": "tray",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 5.4,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 107.1,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_54_ah_seng",
+      "date": "2026-09-17T16:00:00.000Z",
+      "off": 54,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 1.65,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 2.2,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 1.5,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": false,
+      "total": 21,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_53_hup_lee",
+      "date": "2026-09-16T16:00:00.000Z",
+      "off": 53,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 18,
+          "delivered": 18,
+          "charged": 18,
+          "price": 6.5,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 7.8,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3.5,
+          "delivered": 3.5,
+          "charged": 3.5,
+          "price": 11.4,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 195.9,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_52_ah_seng",
+      "date": "2026-09-15T16:00:00.000Z",
+      "off": 52,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6.5,
+          "delivered": 6.5,
+          "charged": 6.5,
+          "price": 1.65,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 2.2,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 1.5,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 22.52,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_51_hup_lee",
+      "date": "2026-09-14T16:00:00.000Z",
+      "off": 51,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 17,
+          "delivered": 17,
+          "charged": 17,
+          "price": 6.5,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 11.4,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 144.7,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_50_ah_seng",
+      "date": "2026-09-13T16:00:00.000Z",
+      "off": 50,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 4.4,
+          "charged": 5,
+          "price": 2.2,
+          "shortValue": 1.32,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 1.5,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 17,
+      "recoverable": 1.32,
+      "jump": null
+    },
+    {
+      "id": "do_48_hup_lee",
+      "date": "2026-09-11T16:00:00.000Z",
+      "off": 48,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 16,
+          "delivered": 16,
+          "charged": 16,
+          "price": 6.5,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 7.8,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 135.2,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_48_sin_huat",
+      "date": "2026-09-11T16:00:00.000Z",
+      "off": 48,
+      "sid": "sin_huat",
+      "lines": [
+        {
+          "id": "cooking_oil",
+          "name": "Cooking oil 5L",
+          "unit": "bottle",
+          "ordered": 3,
+          "delivered": 2,
+          "charged": 3,
+          "price": 28.5,
+          "shortValue": 28.5,
+          "priceJump": 3.3
+        },
+        {
+          "id": "rice_fragrant",
+          "name": "Thai rice 25kg",
+          "unit": "bag",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 42,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 169.5,
+      "recoverable": 28.5,
+      "jump": {
+        "id": "cooking_oil",
+        "name": "Cooking oil 5L",
+        "unit": "bottle",
+        "ordered": 3,
+        "delivered": 2,
+        "charged": 3,
+        "price": 28.5,
+        "shortValue": 28.5,
+        "priceJump": 3.3
+      }
+    },
+    {
+      "id": "do_47_ah_seng",
+      "date": "2026-09-10T16:00:00.000Z",
+      "off": 47,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 7,
+          "delivered": 7,
+          "charged": 7,
+          "price": 1.7,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 2.2,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 3.5,
+          "delivered": 3.5,
+          "charged": 3.5,
+          "price": 1.5,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 25.95,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_46_hup_lee",
+      "date": "2026-09-09T16:00:00.000Z",
+      "off": 46,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 19,
+          "delivered": 19,
+          "charged": 19,
+          "price": 6.5,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 4.5,
+          "delivered": 4.5,
+          "charged": 4.5,
+          "price": 7.8,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 2.6,
+          "charged": 3,
+          "price": 11.4,
+          "shortValue": 4.56,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 192.8,
+      "recoverable": 4.56,
+      "jump": null
+    },
+    {
+      "id": "do_45_ah_seng",
+      "date": "2026-09-08T16:00:00.000Z",
+      "off": 45,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 1.7,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 2.2,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 17.3,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_44_hup_lee",
+      "date": "2026-09-07T16:00:00.000Z",
+      "off": 44,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 16,
+          "delivered": 16,
+          "charged": 16,
+          "price": 6.5,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 7.8,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 11.4,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 165.8,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_44_sin_huat",
+      "date": "2026-09-07T16:00:00.000Z",
+      "off": 44,
+      "sid": "sin_huat",
+      "lines": [
+        {
+          "id": "rice_fragrant",
+          "name": "Thai rice 25kg",
+          "unit": "bag",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 42,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "eggs",
+          "name": "Eggs, tray of 30",
+          "unit": "tray",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 5.4,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 100.2,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_43_ah_seng",
+      "date": "2026-09-06T16:00:00.000Z",
+      "off": 43,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 1.7,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 5.5,
+          "delivered": 5.5,
+          "charged": 5.5,
+          "price": 2.2,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 1.5,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 26.8,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_41_hup_lee",
+      "date": "2026-09-04T16:00:00.000Z",
+      "off": 41,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 20,
+          "delivered": 20,
+          "charged": 20,
+          "price": 6.5,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 5.5,
+          "delivered": 5.5,
+          "charged": 5.5,
+          "price": 7.8,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 11.4,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 195.7,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_41_sin_huat",
+      "date": "2026-09-04T16:00:00.000Z",
+      "off": 41,
+      "sid": "sin_huat",
+      "lines": [
+        {
+          "id": "cooking_oil",
+          "name": "Cooking oil 5L",
+          "unit": "bottle",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 27.6,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "rice_fragrant",
+          "name": "Thai rice 25kg",
+          "unit": "bag",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 42,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "eggs",
+          "name": "Eggs, tray of 30",
+          "unit": "tray",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 5.4,
+          "shortValue": 0,
+          "priceJump": 3.8
+        }
+      ],
+      "viaLedger": true,
+      "total": 183,
+      "recoverable": 0,
+      "jump": {
+        "id": "eggs",
+        "name": "Eggs, tray of 30",
+        "unit": "tray",
+        "ordered": 3,
+        "delivered": 3,
+        "charged": 3,
+        "price": 5.4,
+        "shortValue": 0,
+        "priceJump": 3.8
+      }
+    },
+    {
+      "id": "do_40_ah_seng",
+      "date": "2026-09-03T16:00:00.000Z",
+      "off": 40,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 1.75,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 2.25,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 17.25,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_39_hup_lee",
+      "date": "2026-09-02T16:00:00.000Z",
+      "off": 39,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 17,
+          "delivered": 17,
+          "charged": 17,
+          "price": 6.5,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 7.8,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 11.4,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 183.7,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_38_ah_seng",
+      "date": "2026-09-01T16:00:00.000Z",
+      "off": 38,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 1.55,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 3.1,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_37_hup_lee",
+      "date": "2026-08-31T16:00:00.000Z",
+      "off": 37,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 20,
+          "delivered": 20,
+          "charged": 20,
+          "price": 6.5,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 7.8,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 2.5,
+          "delivered": 2.5,
+          "charged": 2.5,
+          "price": 11.4,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 197.5,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_36_ah_seng",
+      "date": "2026-08-30T16:00:00.000Z",
+      "off": 36,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 1.75,
+          "shortValue": 0,
+          "priceJump": 2.9
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 2.25,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 1.55,
+          "shortValue": 0,
+          "priceJump": 3.3
+        }
+      ],
+      "viaLedger": true,
+      "total": 21.7,
+      "recoverable": 0,
+      "jump": {
+        "id": "kangkong",
+        "name": "Kangkong",
+        "unit": "kg",
+        "ordered": 5,
+        "delivered": 5,
+        "charged": 5,
+        "price": 1.75,
+        "shortValue": 0,
+        "priceJump": 2.9
+      }
+    },
+    {
+      "id": "do_34_hup_lee",
+      "date": "2026-08-28T16:00:00.000Z",
+      "off": 34,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 16,
+          "delivered": 16,
+          "charged": 16,
+          "price": 6.5,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 5.5,
+          "delivered": 5.5,
+          "charged": 5.5,
+          "price": 7.7,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 11.4,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 180.55,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_34_sin_huat",
+      "date": "2026-08-28T16:00:00.000Z",
+      "off": 34,
+      "sid": "sin_huat",
+      "lines": [
+        {
+          "id": "cooking_oil",
+          "name": "Cooking oil 5L",
+          "unit": "bottle",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 27.6,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "rice_fragrant",
+          "name": "Thai rice 25kg",
+          "unit": "bag",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 42,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 166.8,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_33_ah_seng",
+      "date": "2026-08-27T16:00:00.000Z",
+      "off": 33,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 2.2,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 2.6,
+          "charged": 3,
+          "price": 1.5,
+          "shortValue": 0.6,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": false,
+      "total": 11.1,
+      "recoverable": 0.6,
+      "jump": null
+    },
+    {
+      "id": "do_32_hup_lee",
+      "date": "2026-08-26T16:00:00.000Z",
+      "off": 32,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 19,
+          "delivered": 16.7,
+          "charged": 19,
+          "price": 6.5,
+          "shortValue": 14.95,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 6.5,
+          "delivered": 6.5,
+          "charged": 6.5,
+          "price": 7.7,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 11.4,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 207.75,
+      "recoverable": 14.95,
+      "jump": null
+    },
+    {
+      "id": "do_31_ah_seng",
+      "date": "2026-08-25T16:00:00.000Z",
+      "off": 31,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 1.7,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 4.5,
+          "delivered": 4.5,
+          "charged": 4.5,
+          "price": 2.2,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 1.5,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 23.1,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_30_hup_lee",
+      "date": "2026-08-24T16:00:00.000Z",
+      "off": 30,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 20,
+          "delivered": 20,
+          "charged": 20,
+          "price": 6.5,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 7.7,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3.5,
+          "delivered": 3.1,
+          "charged": 3.5,
+          "price": 11.4,
+          "shortValue": 4.56,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 208.4,
+      "recoverable": 4.56,
+      "jump": null
+    },
+    {
+      "id": "do_30_sin_huat",
+      "date": "2026-08-24T16:00:00.000Z",
+      "off": 30,
+      "sid": "sin_huat",
+      "lines": [
+        {
+          "id": "cooking_oil",
+          "name": "Cooking oil 5L",
+          "unit": "bottle",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 27.6,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "rice_fragrant",
+          "name": "Thai rice 25kg",
+          "unit": "bag",
+          "ordered": 2,
+          "delivered": 1,
+          "charged": 2,
+          "price": 42,
+          "shortValue": 42,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 166.8,
+      "recoverable": 42,
+      "jump": null
+    },
+    {
+      "id": "do_29_ah_seng",
+      "date": "2026-08-23T16:00:00.000Z",
+      "off": 29,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 7,
+          "delivered": 7,
+          "charged": 7,
+          "price": 1.7,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 3.5,
+          "delivered": 3.5,
+          "charged": 3.5,
+          "price": 2.2,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 19.6,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_27_hup_lee",
+      "date": "2026-08-21T16:00:00.000Z",
+      "off": 27,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 20,
+          "delivered": 20,
+          "charged": 20,
+          "price": 6.4,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 7.7,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 11.2,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 200.1,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_27_sin_huat",
+      "date": "2026-08-21T16:00:00.000Z",
+      "off": 27,
+      "sid": "sin_huat",
+      "lines": [
+        {
+          "id": "cooking_oil",
+          "name": "Cooking oil 5L",
+          "unit": "bottle",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 27.2,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 81.6,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_26_ah_seng",
+      "date": "2026-08-20T16:00:00.000Z",
+      "off": 26,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 1.8,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 2.3,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 1.55,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 28.5,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_25_hup_lee",
+      "date": "2026-08-19T16:00:00.000Z",
+      "off": 25,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 20,
+          "delivered": 20,
+          "charged": 20,
+          "price": 6.4,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 7.7,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 2.5,
+          "delivered": 2.5,
+          "charged": 2.5,
+          "price": 11.2,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 186.8,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_24_ah_seng",
+      "date": "2026-08-18T16:00:00.000Z",
+      "off": 24,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 1.8,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 2.3,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 1.55,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 20.8,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_23_hup_lee",
+      "date": "2026-08-17T16:00:00.000Z",
+      "off": 23,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 20,
+          "delivered": 20,
+          "charged": 20,
+          "price": 6.4,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3.5,
+          "delivered": 3.5,
+          "charged": 3.5,
+          "price": 11.2,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 167.2,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_22_ah_seng",
+      "date": "2026-08-16T16:00:00.000Z",
+      "off": 22,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 1.8,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 2.3,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 17.7,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_20_hup_lee",
+      "date": "2026-08-14T16:00:00.000Z",
+      "off": 20,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 17,
+          "delivered": 17,
+          "charged": 17,
+          "price": 6.4,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 6.5,
+          "delivered": 6.5,
+          "charged": 6.5,
+          "price": 7.7,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 158.85,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_20_sin_huat",
+      "date": "2026-08-14T16:00:00.000Z",
+      "off": 20,
+      "sid": "sin_huat",
+      "lines": [
+        {
+          "id": "cooking_oil",
+          "name": "Cooking oil 5L",
+          "unit": "bottle",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 26.9,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "rice_fragrant",
+          "name": "Thai rice 25kg",
+          "unit": "bag",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 41,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "eggs",
+          "name": "Eggs, tray of 30",
+          "unit": "tray",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 5.1,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 156.2,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_19_ah_seng",
+      "date": "2026-08-13T16:00:00.000Z",
+      "off": 19,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6.5,
+          "delivered": 6.5,
+          "charged": 6.5,
+          "price": 1.95,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 2.3,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 21.88,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_18_hup_lee",
+      "date": "2026-08-12T16:00:00.000Z",
+      "off": 18,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 18,
+          "delivered": 18,
+          "charged": 18,
+          "price": 6.4,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 7.7,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3.5,
+          "delivered": 3.5,
+          "charged": 3.5,
+          "price": 11.2,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 185.2,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_17_ah_seng",
+      "date": "2026-08-11T16:00:00.000Z",
+      "off": 17,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 1.95,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 4.5,
+          "delivered": 4.5,
+          "charged": 4.5,
+          "price": 2.3,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 1.6,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": false,
+      "total": 24.9,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_16_hup_lee",
+      "date": "2026-08-10T16:00:00.000Z",
+      "off": 16,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 20,
+          "delivered": 20,
+          "charged": 20,
+          "price": 6.4,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 7.7,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3.5,
+          "delivered": 3.5,
+          "charged": 3.5,
+          "price": 11.2,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 205.7,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_16_sin_huat",
+      "date": "2026-08-10T16:00:00.000Z",
+      "off": 16,
+      "sid": "sin_huat",
+      "lines": [
+        {
+          "id": "cooking_oil",
+          "name": "Cooking oil 5L",
+          "unit": "bottle",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 26.9,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "rice_fragrant",
+          "name": "Thai rice 25kg",
+          "unit": "bag",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 41,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "eggs",
+          "name": "Eggs, tray of 30",
+          "unit": "tray",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 5.1,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 178,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_15_ah_seng",
+      "date": "2026-08-09T16:00:00.000Z",
+      "off": 15,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 5.5,
+          "delivered": 5.5,
+          "charged": 5.5,
+          "price": 1.95,
+          "shortValue": 0,
+          "priceJump": 5.4
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 4.5,
+          "delivered": 4.5,
+          "charged": 4.5,
+          "price": 2.3,
+          "shortValue": 0,
+          "priceJump": 4.5
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 3.5,
+          "delivered": 3.5,
+          "charged": 3.5,
+          "price": 1.6,
+          "shortValue": 0,
+          "priceJump": 3.2
+        }
+      ],
+      "viaLedger": true,
+      "total": 26.68,
+      "recoverable": 0,
+      "jump": {
+        "id": "kangkong",
+        "name": "Kangkong",
+        "unit": "kg",
+        "ordered": 5.5,
+        "delivered": 5.5,
+        "charged": 5.5,
+        "price": 1.95,
+        "shortValue": 0,
+        "priceJump": 5.4
+      }
+    },
+    {
+      "id": "do_13_hup_lee",
+      "date": "2026-08-07T16:00:00.000Z",
+      "off": 13,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 18,
+          "delivered": 18,
+          "charged": 18,
+          "price": 6.3,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 7.6,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 11,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": false,
+      "total": 192,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_13_sin_huat",
+      "date": "2026-08-07T16:00:00.000Z",
+      "off": 13,
+      "sid": "sin_huat",
+      "lines": [
+        {
+          "id": "rice_fragrant",
+          "name": "Thai rice 25kg",
+          "unit": "bag",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 41,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "eggs",
+          "name": "Eggs, tray of 30",
+          "unit": "tray",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 5,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": false,
+      "total": 97,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_12_ah_seng",
+      "date": "2026-08-06T16:00:00.000Z",
+      "off": 12,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6.5,
+          "delivered": 6.5,
+          "charged": 6.5,
+          "price": 1.85,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 1.55,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 16.68,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_11_hup_lee",
+      "date": "2026-08-05T16:00:00.000Z",
+      "off": 11,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 17,
+          "delivered": 17,
+          "charged": 17,
+          "price": 6.3,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 7.6,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 11,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 167.1,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_10_ah_seng",
+      "date": "2026-08-04T16:00:00.000Z",
+      "off": 10,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 1.85,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 2.2,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 1.55,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 23.9,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_9_hup_lee",
+      "date": "2026-08-03T16:00:00.000Z",
+      "off": 9,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 17,
+          "delivered": 17,
+          "charged": 17,
+          "price": 6.3,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 4,
+          "delivered": 4,
+          "charged": 4,
+          "price": 7.6,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3.5,
+          "delivered": 3.5,
+          "charged": 3.5,
+          "price": 11,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 176,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_8_ah_seng",
+      "date": "2026-08-02T16:00:00.000Z",
+      "off": 8,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 1.85,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 5,
+          "delivered": 5,
+          "charged": 5,
+          "price": 2.2,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 22.1,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_6_hup_lee",
+      "date": "2026-07-31T16:00:00.000Z",
+      "off": 6,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 19,
+          "delivered": 19,
+          "charged": 19,
+          "price": 6.3,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 7.6,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 2.5,
+          "delivered": 2.5,
+          "charged": 2.5,
+          "price": 11,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 192.8,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_6_sin_huat",
+      "date": "2026-07-31T16:00:00.000Z",
+      "off": 6,
+      "sid": "sin_huat",
+      "lines": [
+        {
+          "id": "cooking_oil",
+          "name": "Cooking oil 5L",
+          "unit": "bottle",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 26.9,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "rice_fragrant",
+          "name": "Thai rice 25kg",
+          "unit": "bag",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 41,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 162.7,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_5_ah_seng",
+      "date": "2026-07-30T16:00:00.000Z",
+      "off": 5,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6.5,
+          "delivered": 6.5,
+          "charged": 6.5,
+          "price": 1.9,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 2.2,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 1.6,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 23.75,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_4_hup_lee",
+      "date": "2026-07-29T16:00:00.000Z",
+      "off": 4,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 17,
+          "delivered": 17,
+          "charged": 17,
+          "price": 6.3,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 7.6,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 2,
+          "delivered": 2,
+          "charged": 2,
+          "price": 11,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 174.7,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_3_ah_seng",
+      "date": "2026-07-28T16:00:00.000Z",
+      "off": 3,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 5.5,
+          "delivered": 5.5,
+          "charged": 5.5,
+          "price": 1.9,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "chye_sim",
+          "name": "Chye sim",
+          "unit": "kg",
+          "ordered": 5.5,
+          "delivered": 5.5,
+          "charged": 5.5,
+          "price": 2.2,
+          "shortValue": 0,
+          "priceJump": 0
+        },
+        {
+          "id": "bean_sprout",
+          "name": "Bean sprouts",
+          "unit": "kg",
+          "ordered": 4.5,
+          "delivered": 4.5,
+          "charged": 4.5,
+          "price": 1.6,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 29.75,
+      "recoverable": 0,
+      "jump": null
+    },
+    {
+      "id": "do_2_hup_lee",
+      "date": "2026-07-27T16:00:00.000Z",
+      "off": 2,
+      "sid": "hup_lee",
+      "lines": [
+        {
+          "id": "chicken_whole",
+          "name": "Whole chicken",
+          "unit": "bird",
+          "ordered": 17,
+          "delivered": 13.6,
+          "charged": 17,
+          "price": 6.3,
+          "shortValue": 21.42,
+          "priceJump": 0
+        },
+        {
+          "id": "chicken_midjoint",
+          "name": "Chicken mid-joint",
+          "unit": "kg",
+          "ordered": 5.5,
+          "delivered": 5,
+          "charged": 5.5,
+          "price": 7.6,
+          "shortValue": 3.8,
+          "priceJump": 0
+        },
+        {
+          "id": "pork_belly",
+          "name": "Pork belly",
+          "unit": "kg",
+          "ordered": 3,
+          "delivered": 3,
+          "charged": 3,
+          "price": 11,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 181.9,
+      "recoverable": 25.22,
+      "jump": null
+    },
+    {
+      "id": "do_1_ah_seng",
+      "date": "2026-07-26T16:00:00.000Z",
+      "off": 1,
+      "sid": "ah_seng",
+      "lines": [
+        {
+          "id": "kangkong",
+          "name": "Kangkong",
+          "unit": "kg",
+          "ordered": 6,
+          "delivered": 6,
+          "charged": 6,
+          "price": 1.9,
+          "shortValue": 0,
+          "priceJump": 0
+        }
+      ],
+      "viaLedger": true,
+      "total": 11.4,
+      "recoverable": 0,
+      "jump": null
+    }
+  ],
+  "claims": [
+    {
+      "id": "do_50_ah_seng",
+      "sid": "ah_seng",
+      "date": "2026-09-13T16:00:00.000Z",
+      "amount": 1.32,
+      "status": "open",
+      "age": 7
+    },
+    {
+      "id": "do_48_sin_huat",
+      "sid": "sin_huat",
+      "date": "2026-09-11T16:00:00.000Z",
+      "amount": 28.5,
+      "status": "open",
+      "age": 9
+    },
+    {
+      "id": "do_46_hup_lee",
+      "sid": "hup_lee",
+      "date": "2026-09-09T16:00:00.000Z",
+      "amount": 4.56,
+      "status": "asked",
+      "age": 11
+    },
+    {
+      "id": "do_33_ah_seng",
+      "sid": "ah_seng",
+      "date": "2026-08-27T16:00:00.000Z",
+      "amount": 0.6,
+      "status": "asked",
+      "age": 24
+    },
+    {
+      "id": "do_32_hup_lee",
+      "sid": "hup_lee",
+      "date": "2026-08-26T16:00:00.000Z",
+      "amount": 14.95,
+      "status": "credited",
+      "age": 25
+    },
+    {
+      "id": "do_30_hup_lee",
+      "sid": "hup_lee",
+      "date": "2026-08-24T16:00:00.000Z",
+      "amount": 4.56,
+      "status": "credited",
+      "age": 27
+    },
+    {
+      "id": "do_30_sin_huat",
+      "sid": "sin_huat",
+      "date": "2026-08-24T16:00:00.000Z",
+      "amount": 42,
+      "status": "credited",
+      "age": 27
+    },
+    {
+      "id": "do_2_hup_lee",
+      "sid": "hup_lee",
+      "date": "2026-07-27T16:00:00.000Z",
+      "amount": 25.22,
+      "status": "asked",
+      "age": 55
+    }
+  ],
+  "utterance": "mon order ah seng — 5kg kangkong, 4 chye sim, 3 taugeh. also 2 oil and 1 rice for tues"
+}

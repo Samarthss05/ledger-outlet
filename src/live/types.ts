@@ -1,0 +1,11 @@
+export type Account = { id: string; owner_user_id: string; name: string; demo_seeded_at: string | null };
+export type Supplier = { id: string; account_id: string; name: string; short_name: string; contact_name: string; category: string; cutoff_time: string | null; delivery_days: number[]; payment_terms: string; external_ref?: string | null };
+export type Item = { id: string; account_id: string; supplier_id: string; name: string; unit: string; aliases: string[]; active: boolean; external_ref?: string | null };
+export type Delivery = { id: string; account_id: string; supplier_id: string; delivered_on: string; order_channel: 'ledger' | 'phone' | 'other'; note: string; external_ref?: string | null; lines: Line[] };
+export type Line = { id: string; account_id: string; delivery_id: string; item_id: string; supplier_id: string; quantity_ordered: number; quantity_delivered: number; quantity_charged: number; unit_price: number; line_total: number; short_value: number; external_ref?: string | null };
+export type Claim = { id: string; account_id: string; delivery_line_id: string; amount: number; status: 'open' | 'asked' | 'credited' | 'refused'; updated_at: string; external_ref?: string | null };
+export type SupplierStat = { supplier_id: string; delivery_count: number; short_count: number; total_spend: number };
+export type ItemStat = { item_id: string; first_price: number | null; last_price: number | null; total_quantity: number; total_spend: number };
+export type ClaimSummary = { outstanding: number; recovered: number; open_count: number; asked_count: number };
+export type SpendSummary = { total: number; delivery_count: number };
+export type Ledger = { suppliers: Supplier[]; items: Item[]; deliveries: Delivery[]; claims: Claim[]; supplierStats: SupplierStat[]; itemStats: ItemStat[]; claimsSummary: ClaimSummary; spendSummary: SpendSummary; monthSummary: SpendSummary; hasMore: boolean };
