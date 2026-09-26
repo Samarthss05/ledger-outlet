@@ -3,6 +3,7 @@ import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 import { z } from 'zod';
 import { AiError } from './openrouter.js';
 import { handleLiveAi } from './liveAi.js';
@@ -17,6 +18,6 @@ app.setErrorHandler((error, _req, reply) => {
   return reply.status(500).send({ error: 'Unexpected server error.' });
 });
 const staticRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist');
-await app.register(fastifyStatic, { root: staticRoot, prefix: '/', wildcard: false });
-app.setNotFoundHandler((req, reply) => req.url.startsWith('/api/') ? reply.status(404).send({ error: 'API route not found.' }) : reply.sendFile('index.html'));
+if (existsSync(staticRoot)) await app.register(fastifyStatic, { root: staticRoot, prefix: '/', wildcard: false });
+app.setNotFoundHandler((req, reply) => req.url.startsWith('/api/') || !existsSync(staticRoot) ? reply.status(404).send({ error: 'Route not found.' }) : reply.sendFile('index.html'));
 await app.listen({ port: Number(process.env.PORT || 3001), host: '0.0.0.0' });

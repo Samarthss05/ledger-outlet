@@ -195,7 +195,8 @@ revoke all on public.ledger_accounts, public.ledger_suppliers, public.ledger_ite
   public.ledger_order_drafts, public.ledger_ai_usage from anon;
 grant select, insert, update, delete on public.ledger_accounts, public.ledger_suppliers,
   public.ledger_items, public.ledger_deliveries, public.ledger_delivery_lines,
-  public.ledger_claims, public.ledger_order_drafts, public.ledger_ai_usage to authenticated;
+  public.ledger_claims, public.ledger_order_drafts to authenticated;
+grant select, insert on public.ledger_ai_usage to authenticated;
 
 -- Aggregate functions keep large histories in Postgres instead of sending all rows to AI functions.
 create function public.ledger_spend_summary(

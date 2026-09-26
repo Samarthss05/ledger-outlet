@@ -31,15 +31,27 @@ export async function loadLedger(accountId: string, page = 0, pageSize = 100): P
   for (const r of [suppliersR, itemsR, deliveriesR, supplierStatsR, itemStatsR, claimsSummaryR, spendSummaryR, monthSummaryR]) fail(r.error);
   const deliveryRows = ((deliveriesR.data || []) as Omit<Delivery, 'lines'>[]).slice(0, pageSize);
   const ids = deliveryRows.map(d => d.id);
-  const linesR = ids.length ? await db.from('ledger_delivery_lines').select('*').eq('account_id', accountId).in('delivery_id', ids) : { data: [] as Line[], error: null };
-  fail(linesR.error);
-  const lines = (linesR.data || []) as Line[];
+  const lines: Line[] = [];
+  if (ids.length) for (let from = 0; ; from += 1000) {
+    const result = await db.from('ledger_delivery_lines').select('*').eq('account_id', accountId).in('delivery_id', ids).order('id').range(from, from + 999);
+    fail(result.error);
+    lines.push(...((result.data || []) as Line[]));
+    if ((result.data || []).length < 1000) break;
+  }
   const lineIds = lines.map(l => l.id);
-  const claimsR = lineIds.length ? await db.from('ledger_claims').select('*').eq('account_id', accountId).in('delivery_line_id', lineIds) : { data: [] as Claim[], error: null };
-  fail(claimsR.error);
+  const claims: Claim[] = [];
+  for (let start = 0; start < lineIds.length; start += 100) {
+    const chunk = lineIds.slice(start, start + 100);
+    for (let from = 0; ; from += 1000) {
+      const result = await db.from('ledger_claims').select('*').eq('account_id', accountId).in('delivery_line_id', chunk).order('id').range(from, from + 999);
+      fail(result.error);
+      claims.push(...((result.data || []) as Claim[]));
+      if ((result.data || []).length < 1000) break;
+    }
+  }
   return {
     suppliers: (suppliersR.data || []) as Supplier[], items: (itemsR.data || []) as Item[],
-    deliveries: deliveryRows.map(d => ({ ...d, lines: lines.filter(l => l.delivery_id === d.id) })), claims: (claimsR.data || []) as Claim[],
+    deliveries: deliveryRows.map(d => ({ ...d, lines: lines.filter(l => l.delivery_id === d.id) })), claims,
     supplierStats: (supplierStatsR.data || []) as SupplierStat[], itemStats: (itemStatsR.data || []) as ItemStat[],
     claimsSummary: ((claimsSummaryR.data || [])[0] || { outstanding: 0, recovered: 0, open_count: 0, asked_count: 0 }) as ClaimSummary,
     spendSummary: ((spendSummaryR.data || [])[0] || { total: 0, delivery_count: 0 }) as SpendSummary,

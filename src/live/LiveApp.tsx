@@ -35,7 +35,7 @@ export default function LiveApp() {
   const [itemSupplier, setItemSupplier] = useState('');
   const refresh = useCallback(async (id: string, nextPage = 0) => {
     const data = await loadLedger(id, nextPage);
-    setLedger(previous => nextPage && previous ? { ...data, deliveries: [...previous.deliveries, ...data.deliveries] } : data);
+    setLedger(previous => nextPage && previous ? { ...data, deliveries: [...previous.deliveries, ...data.deliveries], claims: [...previous.claims, ...data.claims] } : data);
     setPage(nextPage);
   }, []);
   useEffect(() => {
