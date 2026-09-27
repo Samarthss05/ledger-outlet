@@ -37,7 +37,7 @@ export function InvoiceCapture({ accountId, token, ledger, busy, run, refresh }:
       lines:draft.lines.map(line => ({item_id:line.itemId!,quantity_ordered:line.chargedQuantity!,quantity_delivered:line.deliveredQuantity!,quantity_charged:line.chargedQuantity!,unit_price:line.unitPrice!})) });
     await refresh(); setDraft(null); setFile(null); setImage(''); setLocalError('Invoice saved as a reviewed delivery.');
   }); };
-  return <div className="card pad invoice-capture"><h3>Read a photo invoice</h3><p className="muted">Your image is sent to OpenRouter only when you choose Extract. The result is a draft. Confirm prices, packs, and delivered quantities before saving.</p>
+  return <div className="card pad invoice-capture"><h3>Scan a photo invoice with AI</h3><p className="muted">Choose a photo, extract an editable draft, then confirm every item and price before saving. Your image is sent only when you select Extract.</p>
     <label>Invoice photo<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => { const selected = event.target.files?.[0]; event.currentTarget.value = ''; void choose(selected); }} /></label>
     {image && <><img src={image} alt="Selected invoice for review" className="invoice-preview" /><button className="btn ai" onClick={extract} disabled={busy || !ledger.items.length}>✦ Extract draft with AI</button></>}
     {localError && <p role="status" className="muted">{localError}</p>}
