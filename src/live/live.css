@@ -19,7 +19,7 @@
 .metric-pair strong { display:block; font-size:18px; }
 .metric-pair span { display:block; color:var(--ink-3); font-size:11px; }
 .empty { padding:16px; }
-.live-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:min(540px,100%); z-index:20; display:grid; grid-template-columns:repeat(5,1fr); background:var(--card); border-top:1px solid var(--line); padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px)); box-shadow:var(--sh-2); }
+.live-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:min(540px,100%); z-index:20; display:grid; grid-template-columns:repeat(6,1fr); background:var(--card); border-top:1px solid var(--line); padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px)); box-shadow:var(--sh-2); }
 .live-nav button { display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center; font-size:19px; color:var(--ink-3); }
 .live-nav button span { font-size:10px; font-weight:620; }
 .live-nav button.selected { color:var(--green); }

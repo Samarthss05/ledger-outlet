@@ -70,3 +70,43 @@ body { background:var(--body-background); min-height:100vh; }
 .row:hover { background:rgba(111,206,170,.06); }
 @media (min-width:780px) { .app { max-width:620px; } .auth-wrap { max-width:560px; } .live-nav { width:min(620px,100%); } }
 @media (max-width:420px) { .auth-card { padding:20px; } .theme-toggle span:last-child { display:none; } .bar { gap:8px; } }
+.insight-hero { overflow:hidden; background:radial-gradient(circle at 92% 6%,rgba(76,228,171,.23),transparent 46%),linear-gradient(145deg,var(--card-highlight),var(--card) 72%); }
+.insight-kicker { color:var(--green); font-size:10px; font-weight:800; letter-spacing:.13em; }
+.insight-hero h3 { margin:8px 0; font-size:25px; line-height:1.12; letter-spacing:-.04em; }
+.insight-hero p, .insight-intro { color:var(--ink-2); font-size:12px; line-height:1.5; }
+.insight-ai-btn { margin-top:16px; width:100%; }
+.insight-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:20px; }
+.insight-stats div { padding:10px 8px; border:1px solid var(--line); border-radius:12px; background:var(--card-2); }
+.insight-stats strong, .insight-stats span { display:block; }
+.insight-stats strong { color:var(--green); font-size:22px; }
+.insight-stats span { color:var(--ink-3); font-size:10px; }
+.insight-intro { margin:0 0 12px; }
+.insight-card, .restock-card { margin-bottom:10px; }
+.insight-title { display:flex; align-items:start; justify-content:space-between; gap:10px; }
+.insight-title h3 { margin:0; font-size:17px; }
+.insight-title small { color:var(--ink-3); font-size:11px; }
+.insight-chip { flex:none; padding:5px 8px; border-radius:999px; background:var(--card-2); color:var(--ink-2); font-size:10px; font-weight:700; }
+.insight-chip.urgent { background:var(--amber-bg); color:var(--amber); }
+.insight-lead { display:flex; align-items:baseline; gap:8px; margin:16px 0; flex-wrap:wrap; }
+.insight-lead span { color:var(--ink-3); font-size:11px; }
+.insight-lead strong { color:var(--green); font-size:23px; }
+.insight-lead small { color:var(--ink-3); font-size:10px; }
+.insight-callout { padding:11px 12px; border-radius:11px; background:var(--green-bg); color:var(--green-2); font-size:12px; line-height:1.5; }
+.insight-note, .retail-context { padding:10px 12px; border-radius:10px; background:var(--card-2); color:var(--ink-2); font-size:11px; line-height:1.5; }
+.retail-context { border-left:3px solid var(--ai); }
+.insight-note a, .retail-context a { color:var(--green); }
+.retail-context small { color:var(--ink-3); }
+.insight-price-list { border-top:1px solid var(--line); margin-top:14px; padding-top:7px; }
+.insight-price-list div { display:flex; justify-content:space-between; gap:10px; padding:5px 0; font-size:11px; }
+.insight-price-list small { color:var(--ink-3); }
+.insight-price-list b { white-space:nowrap; }
+.restock-numbers { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0; }
+.restock-numbers div { padding:12px; border-radius:11px; background:var(--card-2); }
+.restock-numbers b,.restock-numbers small { display:block; }
+.restock-numbers b { font-size:16px; }
+.restock-numbers small { color:var(--ink-3); font-size:10px; }
+.insight-forms details + details { border-top:1px solid var(--line); }
+.insight-forms summary { padding:13px 0; cursor:pointer; color:var(--ink); font-size:13px; font-weight:700; }
+.insight-forms form { padding:0 0 16px; }
+.insight-forms form label { display:block; margin:10px 0; color:var(--ink-2); font-size:11px; font-weight:650; }
+.insight-forms form input, .insight-forms form select { display:block; width:100%; margin-top:5px; padding:10px; border:1px solid var(--line-2); border-radius:9px; background:var(--input-background); color:var(--ink); font:inherit; }

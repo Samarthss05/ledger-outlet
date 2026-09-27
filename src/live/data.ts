@@ -1,5 +1,5 @@
 import { needClient } from './supabase';
-import type { Account, Claim, ClaimSummary, Delivery, Item, ItemStat, Ledger, Line, SpendSummary, Supplier, SupplierStat } from './types';
+import type { Account, Claim, ClaimSummary, Delivery, Item, ItemStat, Ledger, Line, MarketBenchmark, PriceInsight, Product, RestockInsight, SpendSummary, Supplier, SupplierStat } from './types';
 const fail = (error: { message: string } | null) => { if (error) throw new Error(error.message); };
 const nowMonthStart = () => {
   const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit' }).formatToParts(new Date());
@@ -18,17 +18,21 @@ export async function createAccount(name: string, userId: string): Promise<Accou
 }
 export async function loadLedger(accountId: string, page = 0, pageSize = 100): Promise<Ledger> {
   const db = needClient();
-  const [suppliersR, itemsR, deliveriesR, supplierStatsR, itemStatsR, claimsSummaryR, spendSummaryR, monthSummaryR] = await Promise.all([
+  const [suppliersR, productsR, itemsR, deliveriesR, supplierStatsR, itemStatsR, claimsSummaryR, spendSummaryR, monthSummaryR, priceR, restockR, benchmarksR] = await Promise.all([
     db.from('ledger_suppliers').select('*').eq('account_id', accountId).order('name'),
+    db.from('ledger_products').select('*').eq('account_id', accountId).order('name'),
     db.from('ledger_items').select('*').eq('account_id', accountId).order('name'),
     db.from('ledger_deliveries').select('*').eq('account_id', accountId).order('delivered_on', { ascending: false }).range(page * pageSize, (page + 1) * pageSize),
     db.rpc('ledger_supplier_stats', { p_account_id: accountId }),
     db.rpc('ledger_all_item_stats', { p_account_id: accountId }),
     db.rpc('ledger_claim_summary', { p_account_id: accountId }),
     db.rpc('ledger_spend_summary', { p_account_id: accountId }),
-    db.rpc('ledger_spend_summary', { p_account_id: accountId, p_start: nowMonthStart() })
+    db.rpc('ledger_spend_summary', { p_account_id: accountId, p_start: nowMonthStart() }),
+    db.rpc('ledger_price_insights', { p_account_id: accountId }),
+    db.rpc('ledger_restock_insights', { p_account_id: accountId }),
+    db.from('ledger_market_benchmarks').select('*').eq('account_id', accountId).order('observed_on', { ascending: false }).limit(500)
   ]);
-  for (const r of [suppliersR, itemsR, deliveriesR, supplierStatsR, itemStatsR, claimsSummaryR, spendSummaryR, monthSummaryR]) fail(r.error);
+  for (const r of [suppliersR, productsR, itemsR, deliveriesR, supplierStatsR, itemStatsR, claimsSummaryR, spendSummaryR, monthSummaryR, priceR, restockR, benchmarksR]) fail(r.error);
   const deliveryRows = ((deliveriesR.data || []) as Omit<Delivery, 'lines'>[]).slice(0, pageSize);
   const ids = deliveryRows.map(d => d.id);
   const lines: Line[] = [];
@@ -50,20 +54,46 @@ export async function loadLedger(accountId: string, page = 0, pageSize = 100): P
     }
   }
   return {
-    suppliers: (suppliersR.data || []) as Supplier[], items: (itemsR.data || []) as Item[],
+    suppliers: (suppliersR.data || []) as Supplier[], products: (productsR.data || []) as Product[], items: (itemsR.data || []) as Item[],
     deliveries: deliveryRows.map(d => ({ ...d, lines: lines.filter(l => l.delivery_id === d.id) })), claims,
     supplierStats: (supplierStatsR.data || []) as SupplierStat[], itemStats: (itemStatsR.data || []) as ItemStat[],
+    priceInsights: (priceR.data || []) as PriceInsight[], restockInsights: (restockR.data || []) as RestockInsight[],
+    marketBenchmarks: (benchmarksR.data || []) as MarketBenchmark[],
     claimsSummary: ((claimsSummaryR.data || [])[0] || { outstanding: 0, recovered: 0, open_count: 0, asked_count: 0 }) as ClaimSummary,
     spendSummary: ((spendSummaryR.data || [])[0] || { total: 0, delivery_count: 0 }) as SpendSummary,
     monthSummary: ((monthSummaryR.data || [])[0] || { total: 0, delivery_count: 0 }) as SpendSummary,
     hasMore: (deliveriesR.data || []).length > pageSize
   };
 }
-export async function createSupplier(accountId: string, value: { name: string; short_name: string; contact_name: string; category: string; cutoff_time: string | null; delivery_days: number[]; payment_terms: string }) {
+export async function createSupplier(accountId: string, value: { name: string; short_name: string; contact_name: string; category: string; cutoff_time: string | null; delivery_days: number[]; payment_terms: string; lead_time_days: number | null }) {
   const { error } = await needClient().from('ledger_suppliers').insert({ account_id: accountId, ...value }); fail(error);
 }
-export async function createItem(accountId: string, value: { supplier_id: string; name: string; unit: string; aliases: string[] }) {
+export async function createProduct(accountId: string, value: { name: string; category: string; grade: string; base_unit: Product['base_unit']; safety_days: number; singstat_series_no: number | null }) {
+  const { error } = await needClient().from('ledger_products').insert({ account_id: accountId, ...value }); fail(error);
+}
+export async function createItem(accountId: string, value: { supplier_id: string; product_id: string; base_quantity: number | null; name: string; unit: string; aliases: string[] }) {
   const { error } = await needClient().from('ledger_items').insert({ account_id: accountId, ...value }); fail(error);
+}
+export async function updateItemPack(accountId: string, itemId: string, productId: string, baseQuantity: number) {
+  const { error } = await needClient().from('ledger_items').update({ product_id: productId, base_quantity: baseQuantity }).eq('account_id', accountId).eq('id', itemId); fail(error);
+}
+export async function updateProductRetailSeries(accountId: string, productId: string, seriesNo: number | null) {
+  const { error } = await needClient().from('ledger_products').update({ singstat_series_no: seriesNo }).eq('account_id', accountId).eq('id', productId); fail(error);
+}
+export async function updateSupplierLeadTime(accountId: string, supplierId: string, days: number) {
+  const { error } = await needClient().from('ledger_suppliers').update({ lead_time_days: days }).eq('account_id', accountId).eq('id', supplierId); fail(error);
+}
+export async function addQuote(accountId: string, itemId: string, date: string, price: number, validUntil: string | null) {
+  const { error } = await needClient().from('ledger_supplier_quotes').insert({ account_id: accountId, item_id: itemId, quoted_on: date, price_per_pack: price, valid_until: validUntil }); fail(error);
+}
+export async function addStockCount(accountId: string, productId: string, date: string, quantity: number) {
+  const { error } = await needClient().from('ledger_stock_counts').upsert({ account_id: accountId, product_id: productId, counted_on: date, quantity_base: quantity }, { onConflict: 'account_id,product_id,counted_on' }); fail(error);
+}
+export async function addUsage(accountId: string, productId: string, date: string, quantity: number, kind: 'used' | 'waste') {
+  const { error } = await needClient().from('ledger_usage_records').insert({ account_id: accountId, product_id: productId, used_on: date, quantity_base: quantity, kind }); fail(error);
+}
+export async function addBenchmark(accountId: string, value: { product_id: string; market: string; source_name: string; source_url: string; observed_on: string; price_per_base: number; basis: 'wholesale' | 'retail_reference'; note: string }) {
+  const { error } = await needClient().from('ledger_market_benchmarks').insert({ account_id: accountId, ...value }); fail(error);
 }
 export async function createDelivery(accountId: string, value: { supplier_id: string; delivered_on: string; order_channel: Delivery['order_channel']; note: string; lines: { item_id: string; quantity_ordered: number; quantity_delivered: number; quantity_charged: number; unit_price: number }[]; external_ref?: string | null }) {
   const { error } = await needClient().rpc('ledger_create_delivery', {

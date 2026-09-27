@@ -1,7 +1,7 @@
 import demo from '../../data/demo.json';
 import { createDelivery } from './data';
 import { needClient } from './supabase';
-import type { Item, Supplier } from './types';
+import type { Item, Product, Supplier } from './types';
 
 const sgDate = (value: string) => {
   const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(value));
@@ -20,8 +20,16 @@ export async function seedDemo(accountId: string, onProgress: (message: string) 
   if (suppliersR.error) throw new Error(suppliersR.error.message);
   const supplierIds = Object.fromEntries(((suppliersR.data || []) as Pick<Supplier, 'id' | 'external_ref'>[]).map(s => [s.external_ref!.split(':').at(-1), s.id]));
   onProgress('Adding sample catalog…');
+  const productsPayload = Object.entries(demo.items).map(([key, value]) => ({
+    account_id: accountId, external_ref: `demo:product:${key}`, name: value.name,
+    base_unit: ['kg', 'g'].includes(value.unit.toLowerCase()) ? 'kg' : ['l', 'ml'].includes(value.unit.toLowerCase()) ? 'l' : 'each'
+  }));
+  const productsR = await db.from('ledger_products').upsert(productsPayload, { onConflict: 'account_id,external_ref' }).select('id,external_ref');
+  if (productsR.error) throw new Error(productsR.error.message);
+  const productIds = Object.fromEntries(((productsR.data || []) as Pick<Product, 'id' | 'external_ref'>[]).map(p => [p.external_ref!.split(':').at(-1), p.id]));
   const itemsPayload = Object.entries(demo.items).map(([key, value]) => ({
     account_id: accountId, external_ref: `demo:item:${key}`, supplier_id: supplierIds[value.sup],
+    product_id: productIds[key], base_quantity: ['kg', 'l', 'each'].includes(value.unit.toLowerCase()) ? 1 : value.unit.toLowerCase() === 'g' || value.unit.toLowerCase() === 'ml' ? 0.001 : null,
     name: value.name, unit: value.unit, aliases: value.words, active: true
   }));
   const itemsR = await db.from('ledger_items').upsert(itemsPayload, { onConflict: 'account_id,external_ref' }).select('id,external_ref');
