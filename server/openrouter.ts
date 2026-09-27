@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 export class AiError extends Error { constructor(message: string, public status = 502) { super(message); } }
-export async function openRouterJson<T extends z.ZodType>(name: string, schema: T, jsonSchema: object, system: string, user: string): Promise<z.infer<T>> {
+type UserContent = string | ({ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } })[];
+export async function openRouterJson<T extends z.ZodType>(name: string, schema: T, jsonSchema: object, system: string, user: UserContent, maxTokens = 900): Promise<z.infer<T>> {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) throw new AiError('OpenRouter is not configured. Add OPENROUTER_API_KEY to the server environment.', 503);
   const response = await fetch(process.env.OPENROUTER_API_URL || 'https://openrouter.ai/api/v1/chat/completions', {
@@ -9,7 +10,7 @@ export async function openRouterJson<T extends z.ZodType>(name: string, schema: 
     headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json',
       'HTTP-Referer': process.env.APP_URL || 'http://localhost:5173', 'X-Title': 'Ledger Outlet' },
     body: JSON.stringify({ model: process.env.OPENROUTER_MODEL || 'openai/gpt-4.1-mini', temperature: 0,
-      max_tokens: 900, provider: { require_parameters: true },
+      max_tokens: maxTokens, provider: { require_parameters: true },
       response_format: { type: 'json_schema', json_schema: { name, strict: true, schema: jsonSchema } },
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }] })
   }).catch(() => { throw new AiError('OpenRouter could not be reached. Please try again.', 502); });

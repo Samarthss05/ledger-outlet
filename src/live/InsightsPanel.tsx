@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { addBenchmark, addQuote, addStockCount, addUsage, createProduct, updateItemPack, updateProductRetailSeries, updateSupplierLeadTime } from './data';
 import type { Ledger, Product, RetailReference } from './types';
 import { CsvImporter } from './CsvImporter';
+import { InvoiceCapture } from './InvoiceCapture';
 
 const money = (value: number) => `S$${Number(value).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const sgToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -59,6 +60,7 @@ export function InsightsPanel({ accountId, token, ledger, busy, run, refresh }: 
     </section>
     {buyerBrief && <section className="sec"><div className="sec-lbl"><h2>Buyer brief</h2></div><div className="card pad">{buyerBrief.mode === 'rules' && <p className="muted">Rule-based brief. Add an OpenRouter key to enable AI explanations.</p>}<p className="result-text">{buyerBrief.answer}</p>{buyerBrief.evidence.map((line, index) => <p className="muted" key={index}>{line}</p>)}</div></section>}
     <section className="sec"><div className="sec-lbl"><h2>Bring your records</h2></div><CsvImporter accountId={accountId} ledger={ledger} busy={busy} run={run} refresh={refresh} /></section>
+    <section className="sec"><InvoiceCapture accountId={accountId} token={token} ledger={ledger} busy={busy} run={run} refresh={refresh} /></section>
     <section className="sec"><div className="sec-lbl"><h2>Supplier price analysis</h2></div>
       <p className="insight-intro">Prices are shown per product base unit. A comparison appears only after you link equivalent products and confirm each pack size.</p>
       {comparison.map(({ product, prices, latestPaid, bestAlternative, benchmark, official }) => <div className="card pad insight-card" key={product.id}>

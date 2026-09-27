@@ -116,3 +116,11 @@ body { background:var(--body-background); min-height:100vh; }
 .csv-template { display:block; overflow-wrap:anywhere; padding:10px; border-radius:9px; background:var(--card-2); color:var(--green); font-size:11px; }
 .csv-preview { margin:12px 0; padding:12px; border:1px solid var(--line); border-radius:10px; font-size:11px; }
 .csv-preview p { margin:6px 0; color:var(--ink-2); }
+.invoice-capture h3 { margin:0 0 8px; }
+.invoice-capture label { display:block; margin:12px 0; color:var(--ink-2); font-size:11px; font-weight:700; }
+.invoice-capture input, .invoice-capture select { display:block; width:100%; margin-top:6px; padding:9px; border:1px solid var(--line-2); border-radius:9px; background:var(--input-background); color:var(--ink); font:inherit; }
+.invoice-preview { display:block; width:100%; max-height:340px; object-fit:contain; margin:12px 0; border:1px solid var(--line); border-radius:10px; background:var(--card-2); }
+.invoice-draft { border-top:1px solid var(--line); margin-top:16px; padding-top:12px; }
+.invoice-draft h4 { margin:0 0 8px; }
+.invoice-line { margin:12px 0; padding:12px; border:1px solid var(--line); border-radius:10px; }
+.invoice-draft > .btn { margin-top:10px; }

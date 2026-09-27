@@ -9,7 +9,7 @@ import { AiError } from './openrouter.js';
 import { handleLiveAi } from './liveAi.js';
 import { fetchRetailReferences } from './singstat.js';
 
-const app = Fastify({ logger: true, bodyLimit: 16_384 });
+const app = Fastify({ logger: true, bodyLimit: 2_800_000 });
 app.post('/api/ai', async req => handleLiveAi(req.body, req.headers.authorization));
 app.get('/api/market', async () => ({ rows: await fetchRetailReferences() }));
 app.get('/api/health', async () => ({ ok: true, dataMode: 'supabase', aiConfigured: Boolean(process.env.OPENROUTER_API_KEY) }));
