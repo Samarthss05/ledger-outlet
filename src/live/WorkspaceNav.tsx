@@ -23,6 +23,6 @@ export function NavIcon({ name }: { name: Tab }) {
 
 export function WorkspaceNav({ tab, onSelect, variant }: { tab: Tab; onSelect: (value: Tab) => void; variant: 'side' | 'bottom' }) {
   return <nav className={variant === 'side' ? 'workspace-side-nav' : 'live-nav'} aria-label="Main navigation">
-    {navItems.map(item => <button key={item.value} type="button" className={tab === item.value ? 'selected' : ''} aria-current={tab === item.value ? 'page' : undefined} aria-label={item.label} onClick={() => onSelect(item.value)}><NavIcon name={item.value}/><span>{variant === 'bottom' ? ({ orders:'Orders', insights:'Market', ask:'Ask' } as Partial<Record<Tab,string>>)[item.value] || item.label : item.label}</span></button>)}
+    {navItems.map(item => <button key={item.value} type="button" className={tab === item.value ? 'selected' : ''} aria-current={tab === item.value ? 'page' : undefined} aria-label={item.label} onClick={() => onSelect(item.value)}><NavIcon name={item.value}/><span>{variant === 'bottom' ? ({ insights:'Market', ask:'Ask' } as Partial<Record<Tab,string>>)[item.value] || item.label : item.label}</span></button>)}
   </nav>;
 }

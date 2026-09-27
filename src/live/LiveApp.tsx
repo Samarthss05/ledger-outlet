@@ -5,7 +5,6 @@ import { configured, needClient } from './supabase';
 import { createAccount, createDelivery, createItem, createSupplier, deleteDelivery, listAccounts, loadLedger, updateClaim } from './data';
 import { seedDemo } from './seed';
 import { ThemeToggle } from './ThemeToggle';
-import type { ChatEntry, ParseResult } from './AskWorkspace';
 import { WorkspaceNav, type Tab } from './WorkspaceNav';
 import type { Account, Ledger } from './types';
 import './live.css';
@@ -32,10 +31,6 @@ export default function LiveApp() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [progress, setProgress] = useState('');
-  const [askText, setAskText] = useState('');
-  const [orderText, setOrderText] = useState('');
-  const [conversation, setConversation] = useState<ChatEntry[]>([]);
-  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [lines, setLines] = useState([{ item_id: '', quantity_ordered: 1, quantity_delivered: 1, quantity_charged: 1, unit_price: 0 }]);
   const [deliverySupplier, setDeliverySupplier] = useState('');
   const [itemSupplier, setItemSupplier] = useState('');
@@ -55,7 +50,7 @@ export default function LiveApp() {
     if (!session) { setAccounts([]); setLedger(null); return; }
     listAccounts().then(rows => { setAccounts(rows); setAccountId(current => current && rows.some(a => a.id === current) ? current : rows[0]?.id || ''); }).catch(error => setNotice(error.message));
   }, [session?.user.id]);
-  useEffect(() => { if (accountId) refresh(accountId).catch(error => setNotice(error.message)); else setLedger(null); setConversation([]); setParseResult(null); }, [accountId, refresh]);
+  useEffect(() => { if (accountId) refresh(accountId).catch(error => setNotice(error.message)); else setLedger(null); }, [accountId, refresh]);
   const run = async (action: () => Promise<void>) => { setBusy(true); setNotice(''); try { await action(); } catch (error) { setNotice(error instanceof Error ? error.message : 'Something went wrong.'); } finally { setBusy(false); } };
   const refreshCurrent = () => refresh(accountId);
   async function createWorkspace(event: FormEvent) { event.preventDefault(); if (!session) return; await run(async () => { const row = await createAccount(accountName, session.user.id); setAccounts(previous => [...previous, row]); setAccountId(row.id); setAccountName(''); }); }
@@ -70,18 +65,6 @@ export default function LiveApp() {
   async function saveDelivery(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const form = new FormData(event.currentTarget); await run(async () => {
     await createDelivery(accountId, { supplier_id: deliverySupplier, delivered_on: String(form.get('delivered_on')), order_channel: String(form.get('order_channel')) as 'ledger' | 'phone' | 'other', note: String(form.get('note') || ''), lines });
     await refreshCurrent(); setPanel(null); setLines([{ item_id: '', quantity_ordered: 1, quantity_delivered: 1, quantity_charged: 1, unit_price: 0 }]);
-  }); }
-  async function callAi(action: 'ask' | 'parse' | 'brief', input: Record<string, unknown>) { await run(async () => {
-    const token = session?.access_token; if (!token) throw new Error('Sign in again to use AI.');
-    const response = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action, accountId, ...input }) });
-    const result = await response.json(); if (!response.ok) throw new Error(result.error || 'AI request failed.');
-    const text = result.answer || result.brief || result.message || '';
-    if (action === 'parse') setParseResult({ text, evidence: result.evidence, drafts: result.drafts });
-    else {
-      const prompt = action === 'brief' ? 'Generate my morning brief' : String(input.question || '');
-      setConversation(previous => [...previous, { id: crypto.randomUUID(), role: 'user', text: prompt }, { id: crypto.randomUUID(), role: 'assistant', text, evidence: result.evidence }]);
-      if (action === 'ask') setAskText('');
-    }
   }); }
   if (!configured) return <main className="app auth-wrap"><div className="auth-brand"><div className="logo">LO</div><h1>Ledger Outlet</h1></div><section className="card pad"><h2>Setup needed</h2><p className="muted">Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in the deployment environment to connect sign in and your ledger.</p></section></main>;
   if (checking) return <main className="app auth-wrap"><p>Loading…</p></main>;
@@ -101,7 +84,7 @@ export default function LiveApp() {
     {tab === 'prices' && <><section className="sec"><div className="sec-lbl"><h2>Price watch</h2><button className="link" onClick={() => { setItemSupplier(suppliers[0]?.id || ''); setPanel('item'); }}>+ Item</button></div><div className="card">{items.map(i => { const stat = ledger?.itemStats.find(s => s.item_id === i.id); const first = Number(stat?.first_price || 0), last = Number(stat?.last_price || 0); return <div className="row" key={i.id}><div className="av">{i.name.slice(0, 2).toUpperCase()}</div><div className="mid"><span className="t">{i.name}</span><span className="m">{supplierName(i.supplier_id)} · {i.unit}</span></div><div className="end"><span className="a n">{stat?.last_price == null ? '—' : money(last)}</span><span className={`delta ${last > first ? 'up' : 'dn'}`}>{first && last !== first ? `${last > first ? '+' : ''}${Math.round((last / first - 1) * 100)}%` : ''}</span></div></div>; })}{!items.length && empty('Add items to track purchase prices.')}</div></section></>}
     {tab === 'insights' && ledger && <Suspense fallback={<section className="sec"><div className="card pad">Loading insights…</div></section>}><InsightsPanel accountId={accountId} token={session.access_token} ledger={ledger} busy={busy} run={run} refresh={refreshCurrent} onAddSupplier={() => setPanel('supplier')} onAddItem={() => { setItemSupplier(suppliers[0]?.id || ''); setPanel('item'); }} /></Suspense>}
     {tab === 'suppliers' && <><section className="sec"><div className="sec-lbl"><h2>Suppliers</h2><button className="link" onClick={() => setPanel('supplier')}>+ Supplier</button></div><div className="card">{suppliers.map(s => { const stat = ledger?.supplierStats.find(x => x.supplier_id === s.id); return <div className="row" key={s.id}><div className="av">{s.short_name.slice(0, 2).toUpperCase()}</div><div className="mid"><span className="t">{s.name}</span><span className="m">{s.category || s.contact_name || 'Supplier'} · {stat?.delivery_count || 0} deliveries</span></div><div className="end"><span className="a n">{money(stat?.total_spend)}</span><span className="s">{stat?.short_count || 0} shortages</span></div></div>; })}{!suppliers.length && empty('Add a supplier before adding catalog items and deliveries.')}</div></section></>}
-    {tab === 'ask' && <Suspense fallback={<div className="workspace-loading">Opening assistant…</div>}><AskWorkspace accountName={account?.name || 'your outlet'} askText={askText} setAskText={setAskText} orderText={orderText} setOrderText={setOrderText} conversation={conversation} parseResult={parseResult} busy={busy} onAsk={question => callAi('ask', { question })} onBrief={() => callAi('brief', {})} onParse={() => callAi('parse', { text: orderText })} onClear={() => setConversation([])} /></Suspense>}
+    {tab === 'ask' && <Suspense fallback={<div className="workspace-loading">Opening assistant…</div>}><AskWorkspace accountId={accountId} accountName={account?.name || 'your outlet'} token={session.access_token} /></Suspense>}
     <WorkspaceNav tab={tab} onSelect={selectTab} variant="bottom" />
     {panel && <div className="modal-backdrop" onMouseDown={() => setPanel(null)}><div className="modal card pad" role="dialog" aria-modal="true" aria-label={`Add ${panel}`} onMouseDown={e => e.stopPropagation()}><button className="sheet-close" onClick={() => setPanel(null)}>×</button><h2>Add {panel}</h2>
       {panel === 'supplier' && <form onSubmit={saveSupplier}><label>Name<input name="name" required minLength={2} /></label><label>Short name<input name="short_name" /></label><label>Contact<input name="contact_name" /></label><label>Category<input name="category" /></label><label>Order cutoff<input type="time" name="cutoff_time" /></label><label>Delivery lead time (days)<input name="lead_time_days" type="number" min="0" max="90" /></label><label>Payment terms<input name="payment_terms" /></label><button className="btn" disabled={busy}>Save supplier</button></form>}
