@@ -6,7 +6,8 @@ import { InvoiceCapture } from './InvoiceCapture';
 
 const money = (value: number) => `S$${Number(value).toLocaleString('en-SG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const sgToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-const ageDays = (date: string) => Math.max(0, Math.floor((Date.now() - new Date(`${date}T00:00:00+08:00`).getTime()) / 86400000));
+const ageDays = (date: string) => Math.floor((Date.now() - new Date(`${date}T00:00:00+08:00`).getTime()) / 86400000);
+const recent = (date: string, maxDays: number) => ageDays(date) >= 0 && ageDays(date) <= maxDays;
 const number = (form: FormData, key: string) => Number(form.get(key));
 
 export function InsightsPanel({ accountId, token, ledger, busy, run, refresh }: {
@@ -29,10 +30,10 @@ export function InsightsPanel({ accountId, token, ledger, busy, run, refresh }: 
   const comparison = ledger.products.map(product => {
     const prices = ledger.priceInsights.filter(row => row.product_id === product.id).sort((a, b) => Number(a.price_per_base) - Number(b.price_per_base));
     const latestPaid = [...prices].filter(row => row.source_kind === 'paid').sort((a, b) => b.observed_on.localeCompare(a.observed_on))[0];
-    const currentOffers = prices.filter(row => ageDays(row.observed_on) <= 30);
+    const currentOffers = prices.filter(row => recent(row.observed_on, 30));
     const bestAlternative = currentOffers.find(row => row.supplier_id !== latestPaid?.supplier_id);
-    const benchmark = ledger.marketBenchmarks.find(row => row.product_id === product.id && row.basis === 'wholesale' && ageDays(row.observed_on) <= 30);
-    const official = retail.find(row => row.seriesNo === product.singstat_series_no && row.baseUnit === product.base_unit && ageDays(row.observedOn) <= 90);
+    const benchmark = ledger.marketBenchmarks.find(row => row.product_id === product.id && row.basis === 'wholesale' && recent(row.observed_on, 30));
+    const official = retail.find(row => row.seriesNo === product.singstat_series_no && row.baseUnit === product.base_unit && recent(row.observedOn, 90));
     return { product, prices, latestPaid, bestAlternative, benchmark, official };
   });
   const restock = ledger.restockInsights.filter(row => row.days_cover !== null && row.lead_days !== null);
@@ -66,8 +67,8 @@ export function InsightsPanel({ accountId, token, ledger, busy, run, refresh }: 
       {comparison.map(({ product, prices, latestPaid, bestAlternative, benchmark, official }) => <div className="card pad insight-card" key={product.id}>
         <div className="insight-title"><div><h3>{product.name}</h3><small>{product.grade ? `${product.grade} · ` : ''}per {product.base_unit}</small></div><span className="insight-chip">{prices.length} source{prices.length === 1 ? '' : 's'}</span></div>
         {latestPaid ? <div className="insight-lead"><span>Latest paid</span><strong>{money(Number(latestPaid.price_per_base))}</strong><small>{supplierById.get(latestPaid.supplier_id)?.name} · {latestPaid.observed_on}</small></div> : <p className="muted">No normalized purchase price yet. Confirm the supplier item’s pack size and record a delivery.</p>}
-        {bestAlternative && latestPaid && Number(bestAlternative.price_per_base) < Number(latestPaid.price_per_base) && ageDays(latestPaid.observed_on) <= 30 && <p className="insight-callout">{supplierById.get(bestAlternative.supplier_id)?.name} has a {bestAlternative.source_kind} at {money(Number(bestAlternative.price_per_base))}/{product.base_unit}, {Math.round((1 - Number(bestAlternative.price_per_base) / Number(latestPaid.price_per_base)) * 100)}% below the latest paid price. Check availability and terms.</p>}
-        {benchmark && latestPaid && <p className="insight-note">Recorded wholesale reference: {money(Number(benchmark.price_per_base))}/{product.base_unit} in {benchmark.market} ({benchmark.observed_on}). Latest paid is {Math.abs(Math.round((Number(latestPaid.price_per_base) / Number(benchmark.price_per_base) - 1) * 100))}% {Number(latestPaid.price_per_base) >= Number(benchmark.price_per_base) ? 'above' : 'below'} that reference. {benchmark.source_url && <a href={benchmark.source_url} target="_blank" rel="noopener noreferrer">Source ↗</a>}</p>}
+        {bestAlternative && latestPaid && Number(bestAlternative.price_per_base) < Number(latestPaid.price_per_base) && recent(latestPaid.observed_on, 30) && <p className="insight-callout">{supplierById.get(bestAlternative.supplier_id)?.name} has a {bestAlternative.source_kind} at {money(Number(bestAlternative.price_per_base))}/{product.base_unit}, {Math.round((1 - Number(bestAlternative.price_per_base) / Number(latestPaid.price_per_base)) * 100)}% below the latest paid price. Check availability and terms.</p>}
+        {benchmark && latestPaid && recent(latestPaid.observed_on, 30) && <p className="insight-note">User-entered wholesale reference from {benchmark.source_name}: {money(Number(benchmark.price_per_base))}/{product.base_unit} in {benchmark.market} ({benchmark.observed_on}). Latest paid is {Math.abs(Math.round((Number(latestPaid.price_per_base) / Number(benchmark.price_per_base) - 1) * 100))}% {Number(latestPaid.price_per_base) >= Number(benchmark.price_per_base) ? 'above' : 'below'} that reference. {benchmark.source_url && <a href={benchmark.source_url} target="_blank" rel="noopener noreferrer">Source ↗</a>}</p>}
         {official && <p className="retail-context">Singapore retail context: {money(official.pricePerBase)}/{product.base_unit} for {official.name}, {official.period}. <a href={official.sourceUrl} target="_blank" rel="noopener noreferrer">SingStat ↗</a><br /><small>Retail consumer average; it is not a wholesale buying benchmark.</small></p>}
         {prices.length > 0 && <div className="insight-price-list">{prices.map(row => <div key={`${row.source_kind}-${row.source_id}`}><span>{supplierById.get(row.supplier_id)?.name || 'Supplier'} <small>· {row.source_kind} · {row.observed_on}</small></span><b>{money(Number(row.price_per_base))}</b></div>)}</div>}
       </div>)}
@@ -75,11 +76,11 @@ export function InsightsPanel({ accountId, token, ledger, busy, run, refresh }: 
     </section>
     <section className="sec"><div className="sec-lbl"><h2>Restock timing</h2></div>
       <p className="insight-intro">Stock is calculated from your last end-of-day count, later deliveries, and usage or waste. Recommendations require at least seven recorded usage days and a supplier lead time.</p>
-      {ledger.products.map(product => { const row = ledger.restockInsights.find(x => x.product_id === product.id); const urgent = row?.days_cover != null && row.lead_days != null && Number(row.days_cover) <= Number(row.lead_days) + Number(row.safety_days); return <div className="card pad restock-card" key={product.id}>
+      {ledger.products.map(product => { const row = ledger.restockInsights.find(x => x.product_id === product.id); const urgent = row?.days_cover != null && row.lead_days != null && recent(row.counted_on, 14) && Number(row.days_cover) <= Number(row.lead_days) + Number(row.safety_days); return <div className="card pad restock-card" key={product.id}>
         <div className="insight-title"><h3>{product.name}</h3><span className={`insight-chip ${urgent ? 'urgent' : ''}`}>{urgent ? 'Order soon' : row?.days_cover != null ? 'On track' : 'Needs data'}</span></div>
         {!row ? <p className="muted">Add an end-of-day stock count to start tracking.</p> : <><div className="restock-numbers"><div><b>{Number(row.stock_on_hand).toFixed(1)} {product.base_unit}</b><small>estimated on hand</small></div><div><b>{row.days_cover == null ? '—' : `${row.days_cover} days`}</b><small>estimated cover</small></div></div><p className="muted">Last count {row.counted_on} · {row.usage_days} usage days · lead time {row.lead_days ?? 'unset'} days</p>
           {urgent && <p className="insight-callout">Review an order of about {Number(row.suggested_quantity).toFixed(1)} {product.base_unit} to cover lead time, {row.safety_days} safety days, and the following week. Confirm incoming orders and current stock first.</p>}
-          {row.days_cover == null && <p className="muted">Record daily usage on at least seven dates in the past 28 days.</p>}{row.lead_days == null && <p className="muted">Set a supplier lead time to enable reorder timing.</p>}</>}
+          {!recent(row.counted_on, 14) && <p className="muted">This stock count is more than 14 days old. Count stock again before using a reorder estimate.</p>}{row.days_cover == null && <p className="muted">Record daily usage on at least seven dates in the past 28 days.</p>}{row.lead_days == null && <p className="muted">Set a supplier lead time to enable reorder timing.</p>}</>}
       </div>; })}
     </section>
     <section className="sec"><div className="sec-lbl"><h2>Improve the data</h2></div>
