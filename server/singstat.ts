@@ -12,6 +12,7 @@ export type RetailReference = {
   sourceName: string;
   sourceUrl: string;
 };
+let cache: { rows: RetailReference[]; expiresAt: number } | null = null;
 
 function packSize(label: string): { quantity: number; baseUnit: RetailReference['baseUnit'] } | null {
   const match = label.match(/\((?:Per )?(\d+(?:\.\d+)?)?\s*(Kilogram|Gram|Litre|Liter|Millilitre|Each)\)/i);
@@ -29,6 +30,7 @@ function packSize(label: string): { quantity: number; baseUnit: RetailReference[
 }
 
 export async function fetchRetailReferences(): Promise<RetailReference[]> {
+  if (cache && cache.expiresAt > Date.now()) return cache.rows;
   const response = await fetch(`https://tablebuilder.singstat.gov.sg/api/table/tabledata/${TABLE_ID}`, {
     headers: { Accept: 'application/json', 'User-Agent': 'LedgerOutlet/1.0' },
     signal: AbortSignal.timeout(12000)
@@ -36,7 +38,7 @@ export async function fetchRetailReferences(): Promise<RetailReference[]> {
   if (!response.ok) throw new Error('Official price feed unavailable.');
   const payload = await response.json() as { StatusCode?: number; Data?: { row?: { seriesNo: string; rowText: string; columns: { key: string; value: string }[] }[] } };
   if (payload.StatusCode !== 200 || !Array.isArray(payload.Data?.row)) throw new Error('Official price feed returned an invalid response.');
-  return payload.Data.row.flatMap(row => {
+  const rows = payload.Data.row.flatMap(row => {
     const pack = packSize(row.rowText);
     const latest = [...row.columns].reverse().find(column => Number.isFinite(Number(column.value)) && Number(column.value) > 0);
     if (!pack || !latest) return [];
@@ -53,4 +55,6 @@ export async function fetchRetailReferences(): Promise<RetailReference[]> {
       sourceUrl: SINGSTAT_SOURCE
     }];
   });
+  cache = { rows, expiresAt: Date.now() + 6 * 60 * 60 * 1000 };
+  return rows;
 }
