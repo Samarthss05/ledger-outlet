@@ -11,6 +11,7 @@
     "dev:web": "vite --host 0.0.0.0",
     "dev:api": "tsx watch server/index.ts",
     "build": "tsc --noEmit && vite build && esbuild server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-server/index.js",
+    "test:csv": "tsx --test tests/csv.test.ts",
     "start": "node dist-server/index.js"
   },
   "dependencies": {

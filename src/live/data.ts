@@ -95,6 +95,19 @@ export async function addUsage(accountId: string, productId: string, date: strin
 export async function addBenchmark(accountId: string, value: { product_id: string; market: string; source_name: string; source_url: string; observed_on: string; price_per_base: number; basis: 'wholesale' | 'retail_reference'; note: string }) {
   const { error } = await needClient().from('ledger_market_benchmarks').insert({ account_id: accountId, ...value }); fail(error);
 }
+export async function importUsage(accountId: string, rows: { product_id: string; used_on: string; quantity_base: number; kind: 'used' | 'waste'; external_ref: string }[]) {
+  const { error } = await needClient().from('ledger_usage_records').upsert(rows.map(row => ({ account_id: accountId, ...row })), { onConflict: 'account_id,external_ref' }); fail(error);
+}
+export async function importQuotes(accountId: string, rows: { item_id: string; quoted_on: string; price_per_pack: number; valid_until: string | null; external_ref: string }[]) {
+  const { error } = await needClient().from('ledger_supplier_quotes').upsert(rows.map(row => ({ account_id: accountId, ...row })), { onConflict: 'account_id,external_ref' }); fail(error);
+}
+export async function importCounts(accountId: string, rows: { product_id: string; counted_on: string; quantity_base: number }[]) {
+  const { error } = await needClient().from('ledger_stock_counts').upsert(rows.map(row => ({ account_id: accountId, ...row })), { onConflict: 'account_id,product_id,counted_on' }); fail(error);
+}
+export async function existingDeliveryRefs(accountId: string, digest: string): Promise<Set<string>> {
+  const { data, error } = await needClient().from('ledger_deliveries').select('external_ref').eq('account_id', accountId).like('external_ref', `csv:${digest}:%`); fail(error);
+  return new Set((data || []).map(row => row.external_ref).filter(Boolean) as string[]);
+}
 export async function createDelivery(accountId: string, value: { supplier_id: string; delivered_on: string; order_channel: Delivery['order_channel']; note: string; lines: { item_id: string; quantity_ordered: number; quantity_delivered: number; quantity_charged: number; unit_price: number }[]; external_ref?: string | null }) {
   const { error } = await needClient().rpc('ledger_create_delivery', {
     p_account_id: accountId, p_supplier_id: value.supplier_id, p_delivered_on: value.delivered_on,

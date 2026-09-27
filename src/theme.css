@@ -110,3 +110,9 @@ body { background:var(--body-background); min-height:100vh; }
 .insight-forms form { padding:0 0 16px; }
 .insight-forms form label { display:block; margin:10px 0; color:var(--ink-2); font-size:11px; font-weight:650; }
 .insight-forms form input, .insight-forms form select { display:block; width:100%; margin-top:5px; padding:10px; border:1px solid var(--line-2); border-radius:9px; background:var(--input-background); color:var(--ink); font:inherit; }
+.csv-import h3 { margin:0 0 8px; }
+.csv-import label { display:block; margin:12px 0; color:var(--ink-2); font-size:11px; font-weight:700; }
+.csv-import select, .csv-import input[type=file] { display:block; width:100%; margin-top:6px; padding:9px; border:1px solid var(--line-2); border-radius:9px; background:var(--input-background); color:var(--ink); font:inherit; }
+.csv-template { display:block; overflow-wrap:anywhere; padding:10px; border-radius:9px; background:var(--card-2); color:var(--green); font-size:11px; }
+.csv-preview { margin:12px 0; padding:12px; border:1px solid var(--line); border-radius:10px; font-size:11px; }
+.csv-preview p { margin:6px 0; color:var(--ink-2); }

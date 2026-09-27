@@ -10,6 +10,7 @@ A TypeScript, React and Vite rebuild of the supplied Ledger Outlet prototype. Su
 - AI questions based on database calculations, order extraction into reviewable supplier drafts, morning briefs and price messages. AI requests require a verified user session and are limited to 30 per account per hour.
 - Market & stock desk: comparable products across suppliers, normalized paid prices and quotes, end-of-day stock counts, daily usage/waste, lead-time-based reorder suggestions, and a source-backed buyer brief.
 - Optional Singapore Department of Statistics retail reference data from table M213761. It is clearly labelled as consumer retail context and never treated as a wholesale procurement benchmark.
+- Reviewable CSV imports for deliveries, usage, stock counts, and supplier quotes. File fingerprints prevent duplicate usage, quote, or delivery records on retry.
 - An optional import of the prototype's 59 sample deliveries. Sample data is only added when an authenticated user selects **Import sample ledger**.
 
 ## Setup
