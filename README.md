@@ -24,7 +24,7 @@ npm run dev
 
 Open http://localhost:5173. Create an account and a ledger, then add suppliers, products, supplier items and deliveries. In **Market & stock**, set pack conversions, record supplier quotes, enter an end-of-day stock count, log daily usage, and set each supplier's delivery lead time. Seven distinct usage dates within 28 days are required before the app estimates days of cover. Reorder quantities cover lead time, safety days, and one further week; review current stock and incoming orders before placing an order.
 
-To use AI, add `OPENROUTER_API_KEY` to the server environment and restart or redeploy. AI remains unavailable until the key is supplied. Numeric price and restock calculations work without AI. The buyer brief uses OpenRouter to explain only the database-backed facts.
+To use AI, add `OPENROUTER_API_KEY` to the server environment and restart or redeploy. Chat, order parsing, and AI prose remain unavailable until the key is supplied. Numeric price and restock calculations work without AI. The buyer brief falls back to a labelled rule-based summary until OpenRouter is configured; with the key, OpenRouter explains only the database-backed facts.
 
 Supabase's built-in email sender has restrictions and is suitable for testing with organization members. Configure custom SMTP under Supabase Auth before inviting external users; otherwise confirmation and password reset email may not be delivered to them. Add your deployed Vercel URL to Supabase Auth URL configuration (site URL and redirect allowlist) so email confirmation and password recovery return to the app.
 

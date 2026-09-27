@@ -14,7 +14,7 @@ export function InsightsPanel({ accountId, token, ledger, busy, run, refresh }: 
 }) {
   const [retail, setRetail] = useState<RetailReference[]>([]);
   const [retailError, setRetailError] = useState('');
-  const [buyerBrief, setBuyerBrief] = useState<{ answer: string; evidence: string[] } | null>(null);
+  const [buyerBrief, setBuyerBrief] = useState<{ answer: string; evidence: string[]; mode?: 'ai' | 'rules' } | null>(null);
   useEffect(() => {
     let active = true;
     fetch('/api/market').then(async response => {
@@ -43,9 +43,9 @@ export function InsightsPanel({ accountId, token, ledger, busy, run, refresh }: 
   const itemOptions = ledger.items.map(i => <option key={i.id} value={i.id}>{i.name} · {supplierById.get(i.supplier_id)?.name || 'Supplier'} · {i.unit}</option>);
   const explain = () => void run(async () => {
     const response = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action: 'insights', accountId }) });
-    const result = await response.json() as { answer?: string; evidence?: string[]; error?: string };
+    const result = await response.json() as { answer?: string; evidence?: string[]; mode?: 'ai' | 'rules'; error?: string };
     if (!response.ok) throw new Error(result.error || 'Could not generate buyer brief.');
-    setBuyerBrief({ answer: result.answer || '', evidence: result.evidence || [] });
+    setBuyerBrief({ answer: result.answer || '', evidence: result.evidence || [], mode: result.mode });
   });
 
   return <>
@@ -56,7 +56,7 @@ export function InsightsPanel({ accountId, token, ledger, busy, run, refresh }: 
         <button className="btn ai insight-ai-btn" onClick={explain} disabled={busy}>✦ Explain my buying insights</button>
       </div>
     </section>
-    {buyerBrief && <section className="sec"><div className="sec-lbl"><h2>Buyer brief</h2></div><div className="card pad"><p className="result-text">{buyerBrief.answer}</p>{buyerBrief.evidence.map((line, index) => <p className="muted" key={index}>{line}</p>)}</div></section>}
+    {buyerBrief && <section className="sec"><div className="sec-lbl"><h2>Buyer brief</h2></div><div className="card pad">{buyerBrief.mode === 'rules' && <p className="muted">Rule-based brief. Add an OpenRouter key to enable AI explanations.</p>}<p className="result-text">{buyerBrief.answer}</p>{buyerBrief.evidence.map((line, index) => <p className="muted" key={index}>{line}</p>)}</div></section>}
     <section className="sec"><div className="sec-lbl"><h2>Supplier price analysis</h2></div>
       <p className="insight-intro">Prices are shown per product base unit. A comparison appears only after you link equivalent products and confirm each pack size.</p>
       {comparison.map(({ product, prices, latestPaid, bestAlternative, benchmark, official }) => <div className="card pad insight-card" key={product.id}>
