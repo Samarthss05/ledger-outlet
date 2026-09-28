@@ -22,6 +22,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
   const [proposal, setProposal] = useState<AssistantProposal | null>(null);
   const requestId = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
   const currentAccount = useRef(accountId);
   currentAccount.current = accountId;
 
@@ -42,6 +43,12 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
   }, [accountId]);
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, [messages.length, pendingQuestion]);
+  useEffect(() => {
+    const composer = composerRef.current;
+    if (!composer) return;
+    composer.style.height = '0px';
+    composer.style.height = `${Math.min(composer.scrollHeight, 160)}px`;
+  }, [question]);
 
   const newChat = () => { requestId.current++; setActiveId(null); setMessages([]); setQuestion(''); setError(''); setProposal(null); setHistoryOpen(false); setLoading(false); setLoadingThread(false); };
   const openChat = async (chat: Conversation) => {
@@ -59,6 +66,8 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
   const ask = async (text: string, action: 'ask' | 'brief' = 'ask') => {
     const prompt = text.trim();
     if (busy || prompt.length < 2) return;
+    const sentFromComposer = action === 'ask' && question.trim() === prompt;
+    if (sentFromComposer) setQuestion('');
     setBusy(true); setPendingQuestion(prompt); setError('');
     let answer = ''; let evidence: string[] = []; let nextId = activeId; let nextProposal: AssistantProposal | null = null;
     try {
@@ -79,7 +88,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
       setMessages(previous => [...previous, ...saved.messages]);
       setProposal(nextProposal);
       setChats(previous => [saved.conversation, ...previous.filter(chat => chat.id !== saved.conversation.id)]);
-      setQuestion(''); setHistoryOpen(false);
+      setHistoryOpen(false);
     } catch (cause) {
       if (currentAccount.current !== accountId) return;
       if (answer) {
@@ -88,7 +97,10 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
           { id: crypto.randomUUID(), role: 'assistant', body: answer, evidence, sequence_no: Date.now() + 1 }]);
         setProposal(nextProposal);
         setError('The answer appeared, but it could not be saved. Copy anything you need before leaving this chat.');
-      } else setError(cause instanceof Error ? cause.message : 'Could not answer that question.');
+      } else {
+        if (sentFromComposer) setQuestion(current => current.trim() ? current : prompt);
+        setError(cause instanceof Error ? cause.message : 'Could not answer that question.');
+      }
     } finally { if (currentAccount.current === accountId) { setBusy(false); setPendingQuestion(''); } }
   };
 
@@ -142,11 +154,23 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
         {hasMore && !search && <button className="ask-older" onClick={() => void loadOlder()}>Load older chats</button>}
       </aside>
       <section className="ask-chat-main" aria-label="Ledger conversation"><div className="ask-thread-top"><div><span className="ai-spark small" aria-hidden="true">✦</span><div><strong>Ledger assistant</strong><small>{accountName} · {active ? 'Saved conversation' : 'New conversation'}</small></div></div><div className="ask-thread-actions">{messages.length > 0 && <button type="button" className="ask-brief-shortcut" title="Generate morning brief" aria-label="Generate morning brief" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ <span>Morning brief</span></button>}</div></div>
-        <div className="ask-thread-scroll" ref={scrollRef} aria-live="polite">{loading || loadingThread ? <p className="muted">Loading conversation…</p> : messages.length === 0 && !pendingQuestion ? <div className="ask-start"><span className="chat-mark" aria-hidden="true">✦</span><h3>What would you like to do?</h3><p>Ask about your outlet or tell me to add and update catalog records. You review every change before it is saved.</p><div className="ask-start-suggestions">{suggestions.map(text => <button key={text} disabled={busy} onClick={() => void ask(text)}>{text}<span aria-hidden="true">↗</span></button>)}</div><button className="ask-brief-link" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ Generate morning brief</button></div> : <>{messages.map(entry => <div className={`chat-turn ${entry.role}`} key={entry.id}><span className="chat-turn-avatar" aria-hidden="true">{entry.role === 'assistant' ? '✦' : 'Y'}</span><div className="chat-turn-body"><strong>{entry.role === 'assistant' ? 'Ledger assistant' : 'You'}</strong><p>{entry.body}</p>{entry.role === 'assistant' && entry.evidence?.length ? <details className="chat-evidence"><summary>Supporting records</summary><ul>{entry.evidence.map((line, index) => <li key={index}>{line}</li>)}</ul></details> : null}</div></div>)}{pendingQuestion && <><div className="chat-turn user"><span className="chat-turn-avatar" aria-hidden="true">Y</span><div className="chat-turn-body"><strong>You</strong><p>{pendingQuestion}</p></div></div><div className="chat-pending" role="status"><span className="chat-turn-avatar">✦</span>Checking your ledger…</div></>}</>}</div>
-        <form className="ask-input" onSubmit={(event: FormEvent) => { event.preventDefault(); void ask(question); }}><label className="visually-hidden" htmlFor="ledger-question">Ask your ledger</label><textarea id="ledger-question" value={question} onChange={event => setQuestion(event.target.value)} placeholder="Ask or say ‘add Coke as an item’…" minLength={2} maxLength={500} required rows={2} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /><div><span>Changes are reviewed before saving</span><button type="submit" disabled={busy || question.trim().length < 2} aria-label="Send question">↑</button></div></form>
+        <div className="ask-thread-scroll" ref={scrollRef} aria-live="polite">{loading || loadingThread ? <p className="muted">Loading conversation…</p> : messages.length === 0 && !pendingQuestion ? <div className="ask-start"><span className="chat-mark" aria-hidden="true">✦</span><h3>What would you like to do?</h3><p>Ask about your outlet or tell me to add and update catalog records. You review every change before it is saved.</p><div className="ask-start-suggestions">{suggestions.map(text => <button key={text} disabled={busy} onClick={() => void ask(text)}>{text}<span aria-hidden="true">↗</span></button>)}</div><button className="ask-brief-link" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ Generate morning brief</button></div> : <>{messages.map(entry => <ChatTurn key={entry.id} role={entry.role} body={entry.body} evidence={entry.evidence} />)}{pendingQuestion && <><ChatTurn role="user" body={pendingQuestion} /><div className="chat-turn assistant chat-pending" role="status"><span className="chat-turn-avatar" aria-hidden="true">✦</span><div className="chat-turn-body"><strong>Ledger assistant</strong><p>Thinking…</p></div></div></>}</>}</div>
+        <form className="ask-input" onSubmit={(event: FormEvent) => { event.preventDefault(); void ask(question); }}><label className="visually-hidden" htmlFor="ledger-question">Ask your ledger</label><textarea ref={composerRef} id="ledger-question" value={question} onChange={event => setQuestion(event.target.value)} placeholder="Message Ledger assistant…" minLength={2} maxLength={500} required rows={1} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /><div><span>Enter to send · Shift+Enter for a new line</span><button type="submit" disabled={busy || question.trim().length < 2} aria-label="Send question">↑</button></div></form>
       </section>
     </div>
     {proposal && ledger && <ActionReview proposal={proposal} ledger={ledger} busy={busy} onConfirm={confirmAction} onCancel={() => setProposal(null)} />}
+  </div>;
+}
+
+
+function ChatTurn({ role, body, evidence = [] }: { role: 'user' | 'assistant'; body: string; evidence?: string[] }) {
+  return <div className={`chat-turn ${role}`}>
+    {role === 'assistant' && <span className="chat-turn-avatar" aria-hidden="true">✦</span>}
+    <div className="chat-turn-body">
+      {role === 'assistant' && <strong>Ledger assistant</strong>}
+      <p>{body}</p>
+      {role === 'assistant' && evidence.length > 0 && <details className="chat-evidence"><summary>Supporting records</summary><ul>{evidence.map((line, index) => <li key={index}>{line}</li>)}</ul></details>}
+    </div>
   </div>;
 }
 
