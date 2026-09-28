@@ -570,6 +570,29 @@
 .catalog-modal-link { margin:2px 0 8px; }
 .catalog-price-empty { padding:20px; }
 .catalog-price-empty .btn { margin-top:12px; }
+.ask-action-card { margin:3px 0 23px 42px; padding:17px; border:1px solid var(--ai-outline); border-radius:14px; background:var(--ai-soft-gradient); }
+.ask-action-heading { display:flex; align-items:center; gap:10px; }
+.ask-action-heading .ai-spark.small { width:31px; height:31px; border-radius:9px; font-size:17px; }
+.ask-action-heading small { display:block; color:var(--green); font-size:9px; font-weight:800; letter-spacing:.1em; }
+.ask-action-heading h3 { margin-top:2px; font-size:15px; }
+.ask-action-card > p { margin:10px 0 14px; color:var(--ws-muted); font-size:11px; line-height:1.5; }
+.ask-action-card form { display:grid; gap:10px; }
+.ask-action-card label { display:block; min-width:0; color:var(--ink-2); font-size:11px; font-weight:700; }
+.ask-action-card input,.ask-action-card select { display:block; width:100%; min-height:38px; margin-top:5px; padding:8px 10px; border:1px solid var(--ws-line); border-radius:8px; background:var(--ws-surface); color:var(--ink); font:inherit; font-size:12px; }
+.ask-action-card input:focus,.ask-action-card select:focus { outline:2px solid var(--green); outline-offset:1px; }
+.ask-action-pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ask-action-fixed { display:flex; justify-content:space-between; gap:10px; padding:9px 10px; border:1px solid var(--ws-line); border-radius:8px; background:var(--ws-surface); color:var(--ws-muted); font-size:11px; }
+.ask-action-fixed strong { color:var(--ink); }
+.ask-action-controls { display:flex; align-items:center; gap:10px; margin-top:3px; }
+.ask-action-controls button:first-child { min-height:38px; padding:0 14px; border-radius:8px; background:var(--green); color:#fff; font-size:11px; font-weight:750; }
+.ask-action-controls button:last-child { padding:9px 8px; color:var(--ws-muted); font-size:11px; font-weight:700; }
+.ask-action-controls button:disabled { opacity:.55; }
+.ask-action-hint { color:var(--ws-muted); font-size:11px; line-height:1.5; }
+.ask-delivery-line { padding:12px; border:1px solid var(--ws-line); border-radius:10px; background:var(--ws-surface); }
+.ask-delivery-line-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-size:11px; }
+.ask-delivery-line-head button,.ask-add-line { color:var(--green); font-size:11px; font-weight:750; }
+.ask-delivery-numbers { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin-top:9px; }
+.ask-add-line { justify-self:start; min-height:32px; }
 @media (max-width:700px) {
   .catalog-workspace { padding-top:18px; }
   .catalog-heading { margin-bottom:15px; }
@@ -591,4 +614,6 @@
   .catalog-row-actions { justify-content:flex-start; flex-wrap:wrap; }
   .catalog-row-actions span { min-width:0; margin-right:auto; text-align:left; }
   .catalog-count { padding-left:51px; }
+  .ask-action-card { margin-left:0; padding:13px; }
+  .ask-action-pair { grid-template-columns:1fr; }
 }

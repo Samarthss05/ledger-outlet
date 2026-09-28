@@ -44,6 +44,17 @@ export async function saveTurn(accountId: string, conversationId: string, questi
   return { conversation: updated as Conversation, messages: ((data || []) as ConversationMessage[]).sort((a, b) => a.sequence_no - b.sequence_no) };
 }
 
+export async function saveActionResult(accountId: string, conversationId: string, body: string) {
+  const { data, error } = await needClient().from('ledger_conversation_messages')
+    .insert({ account_id: accountId, conversation_id: conversationId, role: 'assistant', body, evidence: [] })
+    .select('id,role,body,evidence,sequence_no').single();
+  checked(error);
+  const { error: updateError } = await needClient().from('ledger_conversations')
+    .update({ updated_at: new Date().toISOString() }).eq('account_id', accountId).eq('id', conversationId);
+  checked(updateError);
+  return data as ConversationMessage;
+}
+
 export async function deleteConversation(accountId: string, conversationId: string) {
   const { error } = await needClient().from('ledger_conversations').delete().eq('account_id', accountId).eq('id', conversationId);
   checked(error);

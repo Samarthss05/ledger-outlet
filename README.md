@@ -8,6 +8,7 @@ A TypeScript, React and Vite rebuild of the supplied Ledger Outlet prototype. Su
 - Account-owned ledgers with suppliers, catalog items, deliveries, automatic shortage claims, and price history.
 - Transactional delivery creation; PostgreSQL row-level security on every exposed table.
 - AI questions based on database calculations, order extraction into reviewable supplier drafts, morning briefs and price messages. AI requests require a verified user session and are limited to 30 per account per hour.
+- Chat actions for adding suppliers, products and supplier items; editing or activating items; recording quotes, stock counts, usage and deliveries; setting lead times; and updating claim status. Every action opens an editable review form and requires the signed-in user to save it.
 - Market & stock desk: comparable products across suppliers, normalized paid prices and quotes, end-of-day stock counts, daily usage/waste, lead-time-based reorder suggestions, and a source-backed buyer brief.
 - Optional Singapore Department of Statistics retail reference data from table M213761. It is clearly labelled as consumer retail context and never treated as a wholesale procurement benchmark.
 - Reviewable CSV imports for deliveries, usage, stock counts, and supplier quotes. File fingerprints prevent duplicate usage, quote, or delivery records on retry.
@@ -28,6 +29,8 @@ Open http://localhost:5173. Create an account and a ledger, then add suppliers, 
 
 To use AI, add `OPENROUTER_API_KEY` to the server environment and restart or redeploy. Chat, order parsing, invoice extraction, and AI prose remain unavailable until the key is supplied. Numeric price and restock calculations work without AI. The buyer brief falls back to a labelled rule-based summary until OpenRouter is configured; with the key, OpenRouter explains only the database-backed facts. `OPENROUTER_MODEL` should be a model with both structured-output and image-input support for invoice extraction.
 
+In **Ask ledger**, try “add Coke as an item,” “record a quote for Coke at S$12.50 per case,” or “record today's stock count.” The assistant proposes fields from the message and current outlet records. Check and fill missing supplier, product, pack size, price, date, and quantities in the review card, then select **Save to ledger**. No catalog or financial record is written when the assistant merely proposes an action. Multi-step imports, external supplier messaging, deletions, and market reference sourcing remain in their dedicated workspace flows.
+
 Supabase's built-in email sender has restrictions and is suitable for testing with organization members. Configure custom SMTP under Supabase Auth before inviting external users; otherwise confirmation and password reset email may not be delivered to them. Add your deployed Vercel URL to Supabase Auth URL configuration (site URL and redirect allowlist) so email confirmation and password recovery return to the app.
 
 ## Vercel
@@ -44,6 +47,8 @@ The repository is connected to Vercel, so pushes to the default branch trigger d
 ## Data and security
 
 The migration has account ownership and composite foreign keys, so an item, supplier, delivery and line must belong to the same ledger. Row-level security policies restrict all tables to the owner. Public anonymous access is revoked. Database aggregate functions use the caller's permissions; the AI endpoint verifies the Supabase JWT and account ownership before querying them. Delivery creation is one transaction and opens a claim if charged quantity exceeds delivered quantity.
+
+Chat action proposals are structured server-side and checked against current outlet IDs. The browser applies a confirmed action with the signed-in user's Supabase session, so the same row-level security rules apply as in the manual forms. Action confirmations are saved to conversation history. Pending review cards are local to the open chat and can be requested again after a reload.
 
 All amounts come from recorded charged quantities and prices. Supplier messages are reviewable drafts; nothing is sent to a supplier automatically. The seed importer labels its records as sample data using external references and can be retried after interruption.
 
