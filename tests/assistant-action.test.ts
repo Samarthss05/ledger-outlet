@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { handleLiveAi } from '../server/liveAi.js';
 
-test('"can you add Coke as an item" reaches action review without relying on question classification', async () => {
+test('simple item requests always open review without relying on model classification', async () => {
   const originalFetch = globalThis.fetch;
   const originalEnv = {
     SUPABASE_URL: process.env.SUPABASE_URL,
@@ -25,16 +25,18 @@ test('"can you add Coke as an item" reaches action review without relying on que
     if (url.includes('/rest/v1/ledger_suppliers') || url.includes('/rest/v1/ledger_products') || url.includes('/rest/v1/ledger_items') || url.includes('/rest/v1/ledger_claims') || url.includes('/rest/v1/rpc/')) return respond([]);
     if (url.includes('openrouter.ai')) {
       modelCalls++;
-      const content = { kind: 'create_item', itemId: null, supplierId: null, productId: null, name: 'Coke', unit: null, baseQuantity: null, baseUnit: null, active: null, category: null, grade: null, aliases: [], date: null, quantity: null, price: null, usageKind: null, leadDays: null, claimId: null, claimStatus: null, deliveryLines: [] };
+      const content = { kind: 'unsupported', itemId: null, supplierId: null, productId: null, name: null, unit: null, baseQuantity: null, baseUnit: null, active: null, category: null, grade: null, aliases: [], date: null, quantity: null, price: null, usageKind: null, leadDays: null, claimId: null, claimStatus: null, deliveryLines: [] };
       return respond({ choices: [{ message: { content: JSON.stringify(content) } }] });
     }
     throw new Error(`Unexpected request: ${url}`);
   };
   try {
-    const result = await handleLiveAi({ action: 'ask', accountId, question: 'can you add coke as an item' }, 'Bearer preview-session') as { proposal?: { kind: string; name: string | null } };
-    assert.equal(result.proposal?.kind, 'create_item');
-    assert.equal(result.proposal.name, 'Coke');
-    assert.equal(modelCalls, 1);
+    for (const question of ['can you add coke as an item', 'add coke as an item']) {
+      const result = await handleLiveAi({ action: 'ask', accountId, question }, 'Bearer preview-session') as { proposal?: { kind: string; name: string | null } };
+      assert.equal(result.proposal?.kind, 'create_item');
+      assert.equal(result.proposal.name, 'coke');
+    }
+    assert.equal(modelCalls, 0);
     assert.equal(ledgerWrites, 0);
   } finally {
     globalThis.fetch = originalFetch;
