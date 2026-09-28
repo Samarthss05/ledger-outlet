@@ -14,7 +14,7 @@ const paths: Record<Tab, ReactNode> = {
 const navItems: { value: Tab; label: string }[] = [
   { value: 'today', label: 'Today' }, { value: 'orders', label: 'Deliveries' },
   { value: 'prices', label: 'Prices' }, { value: 'insights', label: 'Market & stock' },
-  { value: 'suppliers', label: 'Suppliers' }, { value: 'ask', label: 'Ask ledger' }
+  { value: 'suppliers', label: 'Catalog' }, { value: 'ask', label: 'Ask ledger' }
 ];
 
 export function NavIcon({ name }: { name: Tab }) {

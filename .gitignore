@@ -8,5 +8,6 @@ supabase/.temp/
 !.env.example
 *.log
 .vercel
+.playwright-cli/
 .env*
 !.env.example

@@ -66,13 +66,21 @@ export async function loadLedger(accountId: string, page = 0, pageSize = 100): P
   };
 }
 export async function createSupplier(accountId: string, value: { name: string; short_name: string; contact_name: string; category: string; cutoff_time: string | null; delivery_days: number[]; payment_terms: string; lead_time_days: number | null }) {
-  const { error } = await needClient().from('ledger_suppliers').insert({ account_id: accountId, ...value }); fail(error);
+  const { data, error } = await needClient().from('ledger_suppliers').insert({ account_id: accountId, ...value }).select('*').single(); fail(error);
+  return data as Supplier;
 }
-export async function createProduct(accountId: string, value: { name: string; category: string; grade: string; base_unit: Product['base_unit']; safety_days: number; singstat_series_no: number | null }) {
-  const { error } = await needClient().from('ledger_products').insert({ account_id: accountId, ...value }); fail(error);
+export async function createProduct(accountId: string, value: { name: string; category: string; grade: string; base_unit: Product['base_unit']; safety_days: number; singstat_series_no: number | null }): Promise<Product> {
+  const { data, error } = await needClient().from('ledger_products').insert({ account_id: accountId, ...value }).select('*').single(); fail(error);
+  return data as Product;
 }
 export async function createItem(accountId: string, value: { supplier_id: string; product_id: string; base_quantity: number | null; name: string; unit: string; aliases: string[] }) {
   const { error } = await needClient().from('ledger_items').insert({ account_id: accountId, ...value }); fail(error);
+}
+export async function updateItem(accountId: string, itemId: string, value: { product_id: string; base_quantity: number; name: string; unit: string; aliases: string[] }) {
+  const { error } = await needClient().from('ledger_items').update(value).eq('account_id', accountId).eq('id', itemId).select('id').single(); fail(error);
+}
+export async function setItemActive(accountId: string, itemId: string, active: boolean) {
+  const { error } = await needClient().from('ledger_items').update({ active }).eq('account_id', accountId).eq('id', itemId).select('id').single(); fail(error);
 }
 export async function updateItemPack(accountId: string, itemId: string, productId: string, baseQuantity: number) {
   const { error } = await needClient().from('ledger_items').update({ product_id: productId, base_quantity: baseQuantity }).eq('account_id', accountId).eq('id', itemId); fail(error);
