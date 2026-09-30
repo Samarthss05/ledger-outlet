@@ -31,7 +31,7 @@ test('simple item requests always open review without relying on model classific
     throw new Error(`Unexpected request: ${url}`);
   };
   try {
-    for (const question of ['can you add coke as an item', 'add coke as an item']) {
+    for (const question of ['can you add coke as an item', 'add coke as an item', 'Add coke', 'Please add coke to my items']) {
       const result = await handleLiveAi({ action: 'ask', accountId, question }, 'Bearer preview-session') as { proposal?: { kind: string; name: string | null } };
       assert.equal(result.proposal?.kind, 'create_item');
       assert.equal(result.proposal.name, 'coke');
