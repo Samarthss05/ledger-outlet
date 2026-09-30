@@ -27,7 +27,7 @@ npm run dev
 
 Open http://localhost:5173. Create an account and a ledger, then add suppliers, products, supplier items and deliveries. In **Market & stock**, set pack conversions, record supplier quotes, enter an end-of-day stock count, log daily usage, and set each supplier's delivery lead time. Seven distinct usage dates within 28 days, usage within the past three days, and a stock count within 14 days are required before the app estimates days of cover. Reorder quantities cover lead time, safety days, and one further week; review current stock and incoming orders before placing an order.
 
-To use AI, add `OPENROUTER_API_KEY` to the server environment and restart or redeploy. Chat, order parsing, invoice extraction, and AI prose remain unavailable until the key is supplied. Numeric price and restock calculations work without AI. The buyer brief falls back to a labelled rule-based summary until OpenRouter is configured; with the key, OpenRouter explains only the database-backed facts. `OPENROUTER_MODEL` should be a model with both structured-output and image-input support for invoice extraction.
+To use AI, add `OPENROUTER_API_KEY` to the server environment and restart or redeploy. Chat, order parsing, invoice extraction, and AI prose remain unavailable until the key is supplied. Numeric price and restock calculations work without AI. The buyer brief falls back to a labelled rule-based summary until OpenRouter is configured; with the key, OpenRouter explains only the database-backed facts. `OPENROUTER_MODEL` should support structured output and image input for invoice extraction. `OPENROUTER_AGENT_MODEL` defaults to `openai/gpt-5.4-mini` for conversational answers and proposed ledger edits; it must support structured output. Answers use account-scoped ledger facts, and edits still require review and confirmation.
 
 In **Ask ledger**, try “add Coke as an item,” “record a quote for Coke at S$12.50 per case,” or “record today's stock count.” The assistant proposes fields from the message and current outlet records. Check and fill missing supplier, product, pack size, price, date, and quantities in the review card, then select **Save to ledger**. No catalog or financial record is written when the assistant merely proposes an action. Multi-step imports, external supplier messaging, deletions, and market reference sourcing remain in their dedicated workspace flows.
 
@@ -40,7 +40,7 @@ The Vercel project uses the Vite build and `api/ai.ts` serverless function. Set 
 - `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (browser-safe)
 - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (server-side validation and RLS queries)
 - `OPENROUTER_API_KEY` (server-side only, add when available)
-- `OPENROUTER_MODEL` and `APP_URL` (optional)
+- `OPENROUTER_MODEL`, `OPENROUTER_AGENT_MODEL`, and `APP_URL` (optional)
 
 The repository is connected to Vercel, so pushes to the default branch trigger deployments. Run `npm run build` before pushing. The app is usable without an OpenRouter key; AI calls explain what configuration is missing.
 
