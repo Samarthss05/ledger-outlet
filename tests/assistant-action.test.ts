@@ -223,3 +223,39 @@ test('assistant calculates period spend from delivery lines with account and dat
     if(originalKey===undefined) delete process.env.OPENROUTER_API_KEY; else process.env.OPENROUTER_API_KEY=originalKey;
   }
 });
+
+test('morning brief uses the ledger agent rather than a fixed totals summary', async () => {
+  const originalFetch=globalThis.fetch;
+  const originalEnv={SUPABASE_URL:process.env.SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY:process.env.SUPABASE_PUBLISHABLE_KEY,OPENROUTER_API_KEY:process.env.OPENROUTER_API_KEY};
+  process.env.SUPABASE_URL='https://preview.supabase.co';
+  process.env.SUPABASE_PUBLISHABLE_KEY='preview-public-key';
+  process.env.OPENROUTER_API_KEY='preview-key';
+  const accountId='22222222-2222-4222-8222-222222222222';
+  const productId='33333333-3333-4333-8333-333333333333';
+  let modelTurns=0;
+  globalThis.fetch=async(input,init)=>{
+    const url=String(input);
+    const respond=(data:unknown)=>new Response(JSON.stringify(data),{status:200,headers:{'content-type':'application/json'}});
+    if(url.includes('openrouter.ai')) {
+      modelTurns++;
+      if(modelTurns===1) return respond({choices:[{message:{role:'assistant',content:null,tool_calls:[{id:'stock-brief',type:'function',function:{name:'read_ledger',arguments:JSON.stringify({view:'stock',search:null,from:null,to:null})}}]}}]});
+      return respond({choices:[{message:{role:'assistant',content:'Review Coke first: two days of cover against three days of lead time [F1].'}}]});
+    }
+    if(url.includes('/auth/v1/user')) return respond({id:'11111111-1111-4111-8111-111111111111',email:'preview@example.com',aud:'authenticated'});
+    if(url.includes('/rest/v1/rpc/ledger_consume_ai_quota')) return respond(true);
+    if(url.includes('/rest/v1/ledger_accounts')) return respond({id:accountId,name:'Test Outlet'});
+    if(url.includes('/rest/v1/ledger_products')) return respond([{id:productId,name:'Coke',base_unit:'each'}]);
+    if(url.includes('/rest/v1/rpc/ledger_restock_insights')) return respond([{product_id:productId,stock_on_hand:4,days_cover:2,lead_days:3,safety_days:2,suggested_quantity:10}]);
+    if(url.includes('/rest/v1/ledger_') || url.includes('/rest/v1/rpc/')) return respond([]);
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  try {
+    const result=await handleLiveAi({action:'brief',accountId},'Bearer preview-session') as {brief:string;evidence:string[]};
+    assert.match(result.brief,/Coke/);
+    assert.equal(result.evidence.length,1);
+    assert.equal(modelTurns,2);
+  } finally {
+    globalThis.fetch=originalFetch;
+    for(const [name,value] of Object.entries(originalEnv)) value===undefined ? delete process.env[name] : process.env[name]=value;
+  }
+});

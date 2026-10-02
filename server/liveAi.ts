@@ -89,26 +89,20 @@ export async function handleLiveAi(body:unknown, authorization:string|undefined)
     return {answer:`${valid.length} catalog item${valid.length === 1 ? '' : 's'} found. ${[...extracted.unmatched,...invalid].length} unmatched. Review drafts before sending.`,drafts,evidence:[...extracted.unmatched,...invalid].map(x => `Unmatched: ${String(x).slice(0,120)}`)};
   }
   if (input.action === 'insights') return buyerBrief(db,input.accountId,suppliers);
-  if (input.action === 'brief' || input.action === 'draft') {
-  const [claimR,spendR,supplierStatsR,itemStatsR] = await Promise.all([
-    db.rpc('ledger_claim_summary',{p_account_id:input.accountId}),db.rpc('ledger_spend_summary',{p_account_id:input.accountId}),
-    db.rpc('ledger_supplier_stats',{p_account_id:input.accountId}),db.rpc('ledger_all_item_stats',{p_account_id:input.accountId})
-  ]);
-  const claim = (check(claimR) || [])[0], spend = (check(spendR) || [])[0];
-  const supplierStats = check(supplierStatsR) || [], itemStats = check(itemStatsR) || [];
   if (input.action === 'brief') {
-    const facts = {account:account.name,totalSpend:money(spend?.total),deliveries:Number(spend?.delivery_count || 0),outstanding:money(claim?.outstanding),recovered:money(claim?.recovered),openClaims:Number(claim?.open_count || 0),largestSuppliers:supplierStats.map((stat:{supplier_id:string;total_spend:number}) => ({name:suppliers.find(s => s.id === stat.supplier_id)?.name,spend:money(stat.total_spend)})).sort((a:{spend:string},b:{spend:string}) => Number(b.spend.replace(/[^\d.]/g,''))-Number(a.spend.replace(/[^\d.]/g,''))).slice(0,3)};
-    const result = await openRouterJson('ledger_live_brief',prose,proseSchema,'Write a concise two-sentence ledger brief using only supplied facts. Do not invent dates, trends or actions.',JSON.stringify(facts));
-    return {brief:result.text,evidence:[`${facts.deliveries} deliveries · ${facts.totalSpend} recorded spend`,`${facts.outstanding} outstanding · ${facts.recovered} recovered`]};
+    const result = await runLedgerAgent(db,input.accountId,account.name,
+      'Give me a read-only morning purchasing brief. Check stock urgency, recent comparable supplier prices, and open shortage claims. Prioritize up to three useful actions; if evidence is missing, say what to record. Do not prepare or save a change.',[]);
+    return result.mode === 'answer' ? {brief:result.answer,evidence:result.evidence} :
+      {brief:'I could not assemble a grounded brief yet. Ask about stock, prices, or claims separately.',evidence:[]};
   }
   if (input.action === 'draft') {
     const item = items.find(i => i.id === input.itemId); if (!item) throw new AiError('Item not found.',404);
-    const stat = itemStats.find((s:{item_id:string}) => s.item_id === item.id);
+    const itemStats = check(await db.rpc('ledger_all_item_stats',{p_account_id:input.accountId})) || [];
+    const stat = itemStats.find((row:{item_id:string}) => row.item_id === item.id);
     const supplier = suppliers.find(s => s.id === item.supplier_id);
     const facts = {item:item.name,unit:item.unit,supplier:supplier?.name,contact:supplier?.contact_name,firstPrice:money(stat?.first_price),latestPrice:money(stat?.last_price),quantityBought:Number(stat?.total_quantity || 0)};
     const result = await openRouterJson('ledger_live_draft',prose,proseSchema,'Write a short polite supplier price inquiry using only supplied facts. Do not claim it was sent. Do not invent a target price.',JSON.stringify(facts));
     return {message:result.text,evidence:[`${facts.item}: ${facts.firstPrice} → ${facts.latestPrice} per ${facts.unit}`]};
-  }
   }
   if (!input.question) throw new AiError('Enter a question.',400);
   const simpleItemRequest = input.question.match(/^\s*(?:please\s+)?(?:(?:(?:can|could|would|will)\s+you|i\s+(?:(?:want|need)\s+(?:you\s+)?to|(?:would|'d)\s+like\s+to))\s+(?:please\s+)?)?(?:add|create)\s+(.+?)\s+as\s+(?:an?\s+)?(?:new\s+)?item[.!?]?\s*$/i);
