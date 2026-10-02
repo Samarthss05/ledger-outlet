@@ -3,7 +3,7 @@ import { createConversation, deleteConversation, listConversations, loadConversa
 import { applyAssistantProposal, type AssistantProposal } from './assistantActions';
 import type { Ledger, Product } from './types';
 
-const suggestions = ['What needs restocking?', 'Compare supplier prices', 'How much do suppliers owe me?', 'Add a new supplier item'];
+const suggestions = ['What should I restock this week?', 'Which supplier prices changed?', 'Where am I losing money on shortages?', 'Add a new supplier item'];
 const shortDate = (value: string) => new Date(value).toLocaleDateString('en-SG', { day: 'numeric', month: 'short' });
 
 export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerChange }: { accountId: string; accountName: string; token: string; ledger: Ledger | null; onLedgerChange: () => Promise<void> }) {
@@ -12,6 +12,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [question, setQuestion] = useState('');
   const [pendingQuestion, setPendingQuestion] = useState('');
+  const [waitingSeconds, setWaitingSeconds] = useState(0);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingThread, setLoadingThread] = useState(false);
@@ -43,6 +44,12 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
   }, [accountId]);
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, [messages.length, pendingQuestion]);
+  useEffect(() => {
+    if (!busy || !pendingQuestion) { setWaitingSeconds(0); return; }
+    const started=Date.now();
+    const timer=window.setInterval(() => setWaitingSeconds(Math.floor((Date.now()-started)/1000)),1000);
+    return () => window.clearInterval(timer);
+  }, [busy,pendingQuestion]);
   useEffect(() => {
     const composer = composerRef.current;
     if (!composer) return;
@@ -154,7 +161,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
         {hasMore && !search && <button className="ask-older" onClick={() => void loadOlder()}>Load older chats</button>}
       </aside>
       <section className="ask-chat-main" aria-label="Ledger conversation"><div className="ask-thread-top"><div><span className="ai-spark small" aria-hidden="true">✦</span><div><strong>Ledger assistant</strong><small>{accountName} · {active ? 'Saved conversation' : 'New conversation'}</small></div></div><div className="ask-thread-actions">{messages.length > 0 && <button type="button" className="ask-brief-shortcut" title="Generate morning brief" aria-label="Generate morning brief" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ <span>Morning brief</span></button>}</div></div>
-        <div className="ask-thread-scroll" ref={scrollRef} aria-live="polite">{loading || loadingThread ? <p className="muted">Loading conversation…</p> : messages.length === 0 && !pendingQuestion ? <div className="ask-start"><span className="chat-mark" aria-hidden="true">✦</span><h3>What would you like to do?</h3><p>Ask about your outlet or tell me to add and update catalog records. You review every change before it is saved.</p><div className="ask-start-suggestions">{suggestions.map(text => <button key={text} disabled={busy} onClick={() => void ask(text)}>{text}<span aria-hidden="true">↗</span></button>)}</div><button className="ask-brief-link" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ Generate morning brief</button></div> : <>{messages.map(entry => <ChatTurn key={entry.id} role={entry.role} body={entry.body} evidence={entry.evidence} />)}{pendingQuestion && <><ChatTurn role="user" body={pendingQuestion} /><div className="chat-turn assistant chat-pending" role="status"><span className="chat-turn-avatar" aria-hidden="true">✦</span><div className="chat-turn-body"><strong>Ledger assistant</strong><p>Thinking…</p></div></div></>}</>}</div>
+        <div className="ask-thread-scroll" ref={scrollRef} aria-live="polite">{loading || loadingThread ? <p className="muted">Loading conversation…</p> : messages.length === 0 && !pendingQuestion ? <div className="ask-start"><span className="chat-mark" aria-hidden="true">✦</span><h3>What would you like to do?</h3><p>Ask me to investigate spend, prices, stock, deliveries, or claims. I can combine records across your outlet, and you review every change before saving.</p><div className="ask-start-suggestions">{suggestions.map(text => <button key={text} disabled={busy} onClick={() => void ask(text)}>{text}<span aria-hidden="true">↗</span></button>)}</div><button className="ask-brief-link" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ Generate morning brief</button></div> : <>{messages.map(entry => <ChatTurn key={entry.id} role={entry.role} body={entry.body} evidence={entry.evidence} />)}{pendingQuestion && <><ChatTurn role="user" body={pendingQuestion} /><div className="chat-turn assistant chat-pending" role="status"><span className="chat-turn-avatar" aria-hidden="true">✦</span><div className="chat-turn-body"><strong>Ledger assistant</strong><p>{waitingSeconds < 4 ? 'Thinking…' : waitingSeconds < 15 ? 'Checking your ledger…' : 'Still working through the records…'}</p></div></div></>}</>}</div>
         <form className="ask-input" onSubmit={(event: FormEvent) => { event.preventDefault(); void ask(question); }}><label className="visually-hidden" htmlFor="ledger-question">Ask your ledger</label><textarea ref={composerRef} id="ledger-question" value={question} onChange={event => setQuestion(event.target.value)} placeholder="Message Ledger assistant…" minLength={2} maxLength={500} required rows={1} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /><div><span>Enter to send · Shift+Enter for a new line</span><button type="submit" disabled={busy || question.trim().length < 2} aria-label="Send question">↑</button></div></form>
       </section>
     </div>
