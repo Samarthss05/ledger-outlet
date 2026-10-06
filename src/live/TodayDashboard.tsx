@@ -21,8 +21,8 @@ export function TodayDashboard({ account, ledger, busy, progress, onTab, onDeliv
   ];
   return <div className="dashboard">
     <section className="dashboard-hero" aria-labelledby="dashboard-title">
-      <div className="dashboard-hero-copy"><p className="eyebrow">YOUR OUTLET WORKSPACE · SINGAPORE</p><h2 id="dashboard-title">Good to see you, {account?.name || 'shopkeeper'}.</h2><p>Keep purchases, supplier prices and stock decisions in one clear view.</p></div>
-      <div className="dashboard-hero-actions"><button className="hero-primary" onClick={onDelivery}>＋ Record delivery</button><button className="hero-secondary" onClick={() => onTab('ask')}>Ask your ledger <span aria-hidden="true">→</span></button></div>
+      <div className="dashboard-hero-copy"><p className="eyebrow">YOUR OUTLET WORKSPACE · SINGAPORE</p><h2 id="dashboard-title">Good to see you, {account?.name || 'shopkeeper'}.</h2><p>Place orders through WhatsApp, then track supplier replies, prices and stock here.</p></div>
+      <div className="dashboard-hero-actions"><button className="hero-primary" onClick={() => onTab('orders')}>WhatsApp orders <span aria-hidden="true">→</span></button><button className="hero-secondary" onClick={() => onTab('ask')}>Ask your ledger <span aria-hidden="true">→</span></button></div>
     </section>
     <section className="dashboard-metrics" aria-label="Outlet summary">{metrics.map(metric => <button key={metric.label} className="metric-card" onClick={() => onTab(metric.tab)}><span className="metric-top"><span className="metric-icon" aria-hidden="true">{metric.icon}</span><span className="metric-label">{metric.label}</span><span className="metric-arrow" aria-hidden="true">↗</span></span><strong className="n">{metric.value}</strong><small>{metric.caption}</small></button>)}</section>
     <div className="dashboard-columns">

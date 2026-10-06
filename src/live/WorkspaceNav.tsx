@@ -12,7 +12,7 @@ const paths: Record<Tab, ReactNode> = {
 };
 
 const navItems: { value: Tab; label: string }[] = [
-  { value: 'today', label: 'Today' }, { value: 'orders', label: 'Deliveries' },
+  { value: 'today', label: 'Today' }, { value: 'orders', label: 'Orders' },
   { value: 'prices', label: 'Prices' }, { value: 'insights', label: 'Market & stock' },
   { value: 'suppliers', label: 'Catalog' }, { value: 'ask', label: 'Ask ledger' }
 ];
