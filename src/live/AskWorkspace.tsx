@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { createConversation, deleteConversation, listConversations, loadConversation, saveActionResult, saveTurn, type Conversation, type ConversationMessage } from './conversations';
 import { applyAssistantProposal, type AssistantProposal } from './assistantActions';
+import { deleteAgentMemory, listAgentMemories, type AgentMemory } from './memories';
 import type { Ledger, Product } from './types';
 
-const suggestions = ['What should I restock this week?', 'Which supplier prices changed?', 'Where am I losing money on shortages?', 'Add a new supplier item'];
+const suggestions = ['Find my biggest buying opportunity', 'What should I restock this week?', 'Investigate supplier shortages', 'Add a new supplier item'];
 const shortDate = (value: string) => new Date(value).toLocaleDateString('en-SG', { day: 'numeric', month: 'short' });
 
 export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerChange }: { accountId: string; accountName: string; token: string; ledger: Ledger | null; onLedgerChange: () => Promise<void> }) {
   const [chats, setChats] = useState<Conversation[]>([]);
+  const [memories, setMemories] = useState<AgentMemory[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [question, setQuestion] = useState('');
@@ -20,7 +22,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
   const [search, setSearch] = useState('');
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState('');
-  const [proposal, setProposal] = useState<AssistantProposal | null>(null);
+  const [proposals, setProposals] = useState<AssistantProposal[]>([]);
   const requestId = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
@@ -29,7 +31,8 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
 
   useEffect(() => {
     const current = ++requestId.current;
-    setChats([]); setActiveId(null); setMessages([]); setQuestion(''); setError(''); setProposal(null); setLoading(true); setBusy(false); setPendingQuestion(''); setHistoryOpen(false);
+    setChats([]); setMemories([]); setActiveId(null); setMessages([]); setQuestion(''); setError(''); setProposals([]); setLoading(true); setBusy(false); setPendingQuestion(''); setHistoryOpen(false);
+    listAgentMemories(accountId).then(rows => { if (requestId.current === current) setMemories(rows); }).catch(cause => { if (requestId.current === current) setError(cause instanceof Error ? cause.message : 'Could not load outlet memory.'); });
     listConversations(accountId).then(async result => {
       if (requestId.current !== current) return;
       setChats(result.rows); setHasMore(result.hasMore);
@@ -57,11 +60,11 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
     composer.style.height = `${Math.min(composer.scrollHeight, 160)}px`;
   }, [question]);
 
-  const newChat = () => { requestId.current++; setActiveId(null); setMessages([]); setQuestion(''); setError(''); setProposal(null); setHistoryOpen(false); setLoading(false); setLoadingThread(false); };
+  const newChat = () => { requestId.current++; setActiveId(null); setMessages([]); setQuestion(''); setError(''); setProposals([]); setHistoryOpen(false); setLoading(false); setLoadingThread(false); };
   const openChat = async (chat: Conversation) => {
     if (busy || chat.id === activeId) { setHistoryOpen(false); return; }
     const current = ++requestId.current;
-    setLoadingThread(true); setError(''); setProposal(null); setHistoryOpen(false);
+    setLoadingThread(true); setError(''); setProposals([]); setHistoryOpen(false);
     try {
       const rows = await loadConversation(accountId, chat.id);
       if (requestId.current !== current) return;
@@ -76,16 +79,16 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
     const sentFromComposer = action === 'ask' && question.trim() === prompt;
     if (sentFromComposer) setQuestion('');
     setBusy(true); setPendingQuestion(prompt); setError('');
-    let answer = ''; let evidence: string[] = []; let nextId = activeId; let nextProposal: AssistantProposal | null = null;
+    let answer = ''; let evidence: string[] = []; let nextId = activeId; let nextProposals: AssistantProposal[] = [];
     try {
       const response = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action, accountId, ...(action === 'ask' ? { question: prompt, ...(activeId ? { conversationId: activeId } : {}) } : {}) }) });
-      const result = await response.json() as { answer?: string; brief?: string; evidence?: string[]; proposal?: AssistantProposal; error?: string };
+      const result = await response.json() as { answer?: string; brief?: string; evidence?: string[]; proposals?: AssistantProposal[]; proposal?: AssistantProposal; error?: string };
       if (!response.ok) throw new Error(result.error || 'Could not answer that question.');
       if (currentAccount.current !== accountId) return;
       answer = result.answer || result.brief || '';
       if (!answer) throw new Error('The assistant returned an empty answer. Please try again.');
       evidence = Array.isArray(result.evidence) ? result.evidence : [];
-      nextProposal = result.proposal || null;
+      nextProposals = Array.isArray(result.proposals) ? result.proposals : result.proposal ? [result.proposal] : [];
       if (!nextId) {
         const created = await createConversation(accountId, prompt.replace(/\s+/g, ' ').slice(0, 80));
         nextId = created.id; setActiveId(created.id); setChats(previous => [created, ...previous]);
@@ -93,7 +96,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
       const saved = await saveTurn(accountId, nextId, prompt, answer, evidence);
       if (currentAccount.current !== accountId) return;
       setMessages(previous => [...previous, ...saved.messages]);
-      setProposal(nextProposal);
+      setProposals(nextProposals);
       setChats(previous => [saved.conversation, ...previous.filter(chat => chat.id !== saved.conversation.id)]);
       setHistoryOpen(false);
     } catch (cause) {
@@ -102,7 +105,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
         setMessages(previous => [...previous,
           { id: crypto.randomUUID(), role: 'user', body: prompt, evidence: [], sequence_no: Date.now() },
           { id: crypto.randomUUID(), role: 'assistant', body: answer, evidence, sequence_no: Date.now() + 1 }]);
-        setProposal(nextProposal);
+        setProposals(nextProposals);
         setError('The answer appeared, but it could not be saved. Copy anything you need before leaving this chat.');
       } else {
         if (sentFromComposer) setQuestion(current => current.trim() ? current : prompt);
@@ -113,6 +116,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
 
   const confirmAction = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const proposal = proposals[0];
     if (!proposal || !ledger || busy) return;
     const fields = new FormData(event.currentTarget);
     setBusy(true); setError('');
@@ -120,9 +124,12 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
     try { result = await applyAssistantProposal(accountId, proposal, fields, ledger); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save that change.'); setBusy(false); return; }
     if (currentAccount.current !== accountId) return;
-    setProposal(null);
     try { await onLedgerChange(); }
     catch { setError(`${result} Reload the page to refresh your catalog.`); }
+    if (proposal.kind === 'remember_fact') {
+      try { setMemories(await listAgentMemories(accountId)); }
+      catch { setError(`${result} Reload the page to refresh saved memories.`); }
+    }
     if (activeId) {
       try { const saved = await saveActionResult(accountId, activeId, result); setMessages(previous => [...previous, saved]); }
       catch {
@@ -130,6 +137,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
         setError(`${result} The confirmation could not be saved to chat history.`);
       }
     }
+    setProposals(previous => previous.slice(1));
     setBusy(false);
   };
 
@@ -142,6 +150,11 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
       if (chat.id === activeId) newChat();
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete chat.'); }
   };
+  const forgetMemory = async (memory: AgentMemory) => {
+    if (busy || !window.confirm(`Forget “${memory.content}”?`)) return;
+    try { await deleteAgentMemory(accountId, memory.id); setMemories(previous => previous.filter(row => row.id !== memory.id)); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not forget that memory.'); }
+  };
   const loadOlder = async () => {
     try {
       const result = await listConversations(accountId, chats.length);
@@ -152,42 +165,46 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
   const shown = chats.filter(chat => chat.title.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
   const active = chats.find(chat => chat.id === activeId);
   return <div className="ask-workspace ask-workspace-v2">
-    <header className="ask-page-head"><div><p className="eyebrow">LEDGER ASSISTANT</p><h2>Ask your ledger</h2><p>Ask about {accountName}'s records or tell the assistant what to update.</p></div><button className="ask-new" onClick={newChat} disabled={busy}>＋ New chat</button></header>
+    <header className="ask-page-head"><div><p className="eyebrow">LEDGER AGENT TEAM</p><h2>Ask your ledger</h2><p>Ask about {accountName}'s records or tell the agents what to update.</p></div><button className="ask-new" onClick={newChat} disabled={busy}>＋ New chat</button></header>
     <div className="ask-mobile-history"><button onClick={() => setHistoryOpen(value => !value)} aria-expanded={historyOpen}>{historyOpen ? '← Back to chat' : `☰ Chats${chats.length ? ` (${chats.length})` : ''}`}</button><span>{active?.title || 'New conversation'}</span></div>
     {error && <div className="ask-error" role="alert">{error}<button onClick={() => setError('')} aria-label="Dismiss message">×</button></div>}
     <div className={`ask-chat-layout ${historyOpen ? 'show-history' : ''}`}>
       <aside className="ask-history" aria-label="Conversation history"><div className="ask-history-heading"><strong>Conversations</strong><small>{chats.length} saved</small></div><label className="visually-hidden" htmlFor="ask-history-search">Search chats</label><input id="ask-history-search" type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search chats" />
         <div className="ask-history-list">{loading ? <p className="muted">Loading chats…</p> : shown.length ? shown.map(chat => <div className={`ask-history-row ${chat.id === activeId ? 'active' : ''}`} key={chat.id}><button className="ask-history-open" onClick={() => void openChat(chat)} aria-current={chat.id === activeId ? 'page' : undefined}><span>{chat.title}</span><small>{shortDate(chat.updated_at)}</small></button><button className="ask-history-delete" title={`Delete ${chat.title}`} aria-label={`Delete ${chat.title}`} onClick={() => void removeChat(chat)}>×</button></div>) : <p className="muted">{search ? 'No matching chats.' : 'Your conversations will appear here after your first answer.'}</p>}</div>
         {hasMore && !search && <button className="ask-older" onClick={() => void loadOlder()}>Load older chats</button>}
+        <details className="ask-memory"><summary>Outlet memory <span>{memories.length}</span></summary><p>Tell Ledger “remember that…” to add a fact for future chats.</p>{memories.length ? <ul>{memories.map(memory => <li key={memory.id}><span>{memory.content}</span><button type="button" onClick={() => void forgetMemory(memory)} aria-label={`Forget ${memory.content}`}>Forget</button></li>)}</ul> : <p>No saved memories yet.</p>}</details>
       </aside>
-      <section className="ask-chat-main" aria-label="Ledger conversation"><div className="ask-thread-top"><div><span className="ai-spark small" aria-hidden="true">✦</span><div><strong>Ledger assistant</strong><small>{accountName} · {active ? 'Saved conversation' : 'New conversation'}</small></div></div><div className="ask-thread-actions">{messages.length > 0 && <button type="button" className="ask-brief-shortcut" title="Generate morning brief" aria-label="Generate morning brief" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ <span>Morning brief</span></button>}</div></div>
-        <div className="ask-thread-scroll" ref={scrollRef} aria-live="polite">{loading || loadingThread ? <p className="muted">Loading conversation…</p> : messages.length === 0 && !pendingQuestion ? <div className="ask-start"><span className="chat-mark" aria-hidden="true">✦</span><h3>What would you like to do?</h3><p>Ask me to investigate spend, prices, stock, deliveries, or claims. I can combine records across your outlet, and you review every change before saving.</p><div className="ask-start-suggestions">{suggestions.map(text => <button key={text} disabled={busy} onClick={() => void ask(text)}>{text}<span aria-hidden="true">↗</span></button>)}</div><button className="ask-brief-link" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ Generate morning brief</button></div> : <>{messages.map(entry => <ChatTurn key={entry.id} role={entry.role} body={entry.body} evidence={entry.evidence} />)}{pendingQuestion && <><ChatTurn role="user" body={pendingQuestion} /><div className="chat-turn assistant chat-pending" role="status"><span className="chat-turn-avatar" aria-hidden="true">✦</span><div className="chat-turn-body"><strong>Ledger assistant</strong><p>{waitingSeconds < 4 ? 'Thinking…' : waitingSeconds < 15 ? 'Checking your ledger…' : 'Still working through the records…'}</p></div></div></>}</>}</div>
+      <section className="ask-chat-main" aria-label="Ledger conversation"><div className="ask-thread-top"><div><span className="ai-spark small" aria-hidden="true">✦</span><div><strong>Ledger agent team</strong><small>{accountName} · {active ? 'Saved conversation' : 'New conversation'}</small></div></div><div className="ask-thread-actions">{messages.length > 0 && <button type="button" className="ask-brief-shortcut" title="Generate morning brief" aria-label="Generate morning brief" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ <span>Morning brief</span></button>}</div></div>
+        <div className="ask-thread-scroll" ref={scrollRef} aria-live="polite">{loading || loadingThread ? <p className="muted">Loading conversation…</p> : messages.length === 0 && !pendingQuestion ? <div className="ask-start"><span className="chat-mark" aria-hidden="true">✦</span><h3>What would you like to do?</h3><p>Pricing, stock, catalog, supplier, and finance agents can investigate together. Review every proposed change before it is saved.</p><div className="ask-start-suggestions">{suggestions.map(text => <button key={text} disabled={busy} onClick={() => void ask(text)}>{text}<span aria-hidden="true">↗</span></button>)}</div><button className="ask-brief-link" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ Generate morning brief</button></div> : <>{messages.map(entry => <ChatTurn key={entry.id} role={entry.role} body={entry.body} evidence={entry.evidence} />)}{pendingQuestion && <><ChatTurn role="user" body={pendingQuestion} /><div className="chat-turn assistant chat-pending" role="status"><span className="chat-turn-avatar" aria-hidden="true">✦</span><div className="chat-turn-body"><strong>Ledger agent team</strong><p>{waitingSeconds < 4 ? 'Planning the task…' : waitingSeconds < 20 ? 'Specialists are checking your records…' : 'Reviewing the findings…'}</p></div></div></>}</>}</div>
         <form className="ask-input" onSubmit={(event: FormEvent) => { event.preventDefault(); void ask(question); }}><label className="visually-hidden" htmlFor="ledger-question">Ask your ledger</label><textarea ref={composerRef} id="ledger-question" value={question} onChange={event => setQuestion(event.target.value)} placeholder="Message Ledger assistant…" minLength={2} maxLength={500} required rows={1} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /><div><span>Enter to send · Shift+Enter for a new line</span><button type="submit" disabled={busy || question.trim().length < 2} aria-label="Send question">↑</button></div></form>
       </section>
     </div>
-    {proposal && ledger && <ActionReview proposal={proposal} ledger={ledger} busy={busy} onConfirm={confirmAction} onCancel={() => setProposal(null)} />}
+    {proposals[0] && ledger && <ActionReview key={`${proposals.length}-${proposals[0].kind}-${proposals[0].name || ''}`} proposal={proposals[0]} remaining={proposals.length} ledger={ledger} busy={busy} onConfirm={confirmAction} onCancel={() => setProposals(previous => previous.slice(1))} />}
   </div>;
 }
 
 
 function ChatTurn({ role, body, evidence = [] }: { role: 'user' | 'assistant'; body: string; evidence?: string[] }) {
+  const agentWork = evidence.filter(line => line.startsWith('Agent · '));
+  const records = evidence.filter(line => !line.startsWith('Agent · '));
   return <div className={`chat-turn ${role}`}>
     {role === 'assistant' && <span className="chat-turn-avatar" aria-hidden="true">✦</span>}
     <div className="chat-turn-body">
-      {role === 'assistant' && <strong>Ledger assistant</strong>}
+      {role === 'assistant' && <strong>Ledger agent team</strong>}
       <p>{body}</p>
-      {role === 'assistant' && evidence.length > 0 && <details className="chat-evidence"><summary>Supporting records</summary><ul>{evidence.map((line, index) => <li key={index}>{line}</li>)}</ul></details>}
+      {role === 'assistant' && agentWork.length > 0 && <details className="chat-evidence chat-agent-work"><summary>{agentWork.length} specialist{agentWork.length === 1 ? '' : 's'} contributed</summary><ul>{agentWork.map((line, index) => <li key={index}>{line.slice(8)}</li>)}</ul></details>}
+      {role === 'assistant' && records.length > 0 && <details className="chat-evidence"><summary>Supporting records</summary><ul>{records.map((line, index) => <li key={index}>{line}</li>)}</ul></details>}
     </div>
   </div>;
 }
 
-function ActionReview({ proposal, ledger, busy, onConfirm, onCancel }: { proposal: AssistantProposal; ledger: Ledger; busy: boolean; onConfirm: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void }) {
+function ActionReview({ proposal, remaining, ledger, busy, onConfirm, onCancel }: { proposal: AssistantProposal; remaining: number; ledger: Ledger; busy: boolean; onConfirm: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [supplierId, setSupplierId] = useState(proposal.supplierId || (proposal.kind === 'create_item' && !ledger.suppliers.length ? '__new' : ''));
   const [productId, setProductId] = useState(proposal.productId || (ledger.products.length ? '' : '__new'));
   const [lineSlots, setLineSlots] = useState<number[]>(Array.from({ length: Math.max(1, proposal.deliveryLines?.length || 0) }, (_, index) => index));
   const item = ledger.items.find(row => row.id === proposal.itemId);
-  const titles = { create_item: 'Add supplier item', edit_item: 'Edit supplier item', toggle_item: proposal.active ? 'Reactivate item' : 'Deactivate item', create_product: 'Add product', create_supplier: 'Add supplier', record_quote: 'Record supplier quote', record_stock: 'Record stock count', record_usage: 'Record usage or waste', set_lead_time: 'Set delivery lead time', record_delivery: 'Record delivery', update_claim: 'Update shortage claim' };
+  const titles = { create_item: 'Add supplier item', edit_item: 'Edit supplier item', toggle_item: proposal.active ? 'Reactivate item' : 'Deactivate item', create_product: 'Add product', create_supplier: 'Add supplier', record_quote: 'Record supplier quote', record_stock: 'Record stock count', record_usage: 'Record usage or waste', set_lead_time: 'Set delivery lead time', record_delivery: 'Record delivery', update_claim: 'Update shortage claim', record_benchmark: 'Record wholesale reference', remember_fact: 'Remember outlet fact' };
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' });
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -195,12 +212,14 @@ function ActionReview({ proposal, ledger, busy, onConfirm, onCancel }: { proposa
     return () => { if (dialog?.open) dialog.close(); };
   }, []);
   return <dialog ref={dialogRef} className="ask-action-card" aria-labelledby="ask-action-title" onCancel={event => { event.preventDefault(); if (!busy) onCancel(); }}>
-    <div className="ask-action-heading"><span className="ai-spark small" aria-hidden="true">✦</span><div><small>REVIEW BEFORE SAVING</small><h3 id="ask-action-title">{titles[proposal.kind]}</h3></div><button type="button" className="ask-action-close" onClick={onCancel} disabled={busy} aria-label="Close review">×</button></div>
+    <div className="ask-action-heading"><span className="ai-spark small" aria-hidden="true">✦</span><div><small>REVIEW BEFORE SAVING{remaining > 1 ? ` · ${remaining} CHANGES LEFT` : ''}</small><h3 id="ask-action-title">{titles[proposal.kind]}</h3></div><button type="button" className="ask-action-close" onClick={onCancel} disabled={busy} aria-label="Close review">×</button></div>
     <form onSubmit={onConfirm}>
       <div className="ask-action-fields"><p className="ask-action-intro">Complete the details below. Nothing changes in your ledger until you save.</p>
       {proposal.kind === 'create_supplier' && <label>Supplier name<input name="name" defaultValue={proposal.name || ''} minLength={2} maxLength={160} required /></label>}
       {proposal.kind === 'create_product' && <><label>Product name<input name="name" defaultValue={proposal.name || ''} minLength={2} maxLength={160} required /></label><label>Comparison unit<select name="baseUnit" defaultValue={proposal.baseUnit || ''} required><option value="">Choose a unit</option><option value="kg">kg</option><option value="l">litre</option><option value="each">each</option></select></label><label>Category<input name="category" defaultValue={proposal.category || ''} maxLength={80} /></label><label>Grade or specification<input name="grade" defaultValue={proposal.grade || ''} maxLength={80} /></label></>}
       {proposal.kind === 'record_quote' && <><label>Supplier item<select name="itemId" defaultValue={proposal.itemId || ''} required><option value="">Choose an item</option>{ledger.items.filter(row => row.active).map(row => <option key={row.id} value={row.id}>{row.name} · {ledger.suppliers.find(supplier => supplier.id === row.supplier_id)?.name}</option>)}</select></label><div className="ask-action-pair"><label>Quoted date<input name="date" type="date" defaultValue={proposal.date || today} required /></label><label>Price per pack (SGD)<input name="price" type="number" min="0.01" step="0.01" defaultValue={proposal.price ?? ''} required /></label></div></>}
+      {proposal.kind === 'record_benchmark' && <><p className="ask-action-hint">Use a genuine comparable wholesale price. Check grade, pack conversion, location, and source before saving.</p><label>Comparable product<select name="productId" defaultValue={proposal.productId || ''} required><option value="">Choose a product</option>{ledger.products.map(row => <option key={row.id} value={row.id}>{row.name} · per {row.base_unit}</option>)}</select></label><div className="ask-action-pair"><label>Market<input name="market" defaultValue={proposal.market || 'Singapore'} minLength={2} maxLength={120} required /></label><label>Observed date<input name="date" type="date" defaultValue={proposal.date || today} required /></label></div><label>Price per product unit (SGD)<input name="price" type="number" min="0.001" step="0.001" defaultValue={proposal.price ?? ''} required /></label><label>Source name<input name="sourceName" defaultValue={proposal.sourceName || ''} minLength={2} maxLength={160} required /></label><label>Source URL<input name="sourceUrl" type="url" pattern="https://.*" defaultValue={proposal.sourceUrl || ''} maxLength={500} placeholder="https://…" /></label><label>Comparison notes<input name="note" defaultValue={proposal.note || ''} maxLength={400} placeholder="Grade, minimum quantity, terms" /></label></>}
+      {proposal.kind === 'remember_fact' && <><p className="ask-action-hint">This fact will be available to the agent team in future chats. Check that it is accurate and suitable for this outlet.</p><label>What Ledger should remember<textarea name="note" defaultValue={proposal.note || ''} minLength={2} maxLength={500} rows={4} required /></label></>}
       {(proposal.kind === 'record_stock' || proposal.kind === 'record_usage') && <><label>Product<select name="productId" defaultValue={proposal.productId || ''} required><option value="">Choose a product</option>{ledger.products.map(row => <option key={row.id} value={row.id}>{row.name} · {row.base_unit}</option>)}</select></label><div className="ask-action-pair"><label>{proposal.kind === 'record_stock' ? 'Counted on' : 'Usage date'}<input name="date" type="date" defaultValue={proposal.date || today} required /></label><label>Quantity in product units<input name="quantity" type="number" min={proposal.kind === 'record_stock' ? '0' : '0.001'} step="0.001" defaultValue={proposal.quantity ?? ''} required /></label></div>{proposal.kind === 'record_usage' && <label>Type<select name="usageKind" defaultValue={proposal.usageKind || ''} required><option value="">Choose type</option><option value="used">Used or sold</option><option value="waste">Waste</option></select></label>}</>}
       {proposal.kind === 'set_lead_time' && <><label>Supplier<select name="supplierId" defaultValue={proposal.supplierId || ''} required><option value="">Choose a supplier</option>{ledger.suppliers.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label><label>Days from order to delivery<input name="leadDays" type="number" min="0" max="90" step="1" defaultValue={proposal.leadDays ?? ''} required /></label></>}
       {proposal.kind === 'update_claim' && <><label>Shortage claim<select name="claimId" defaultValue={proposal.claimId || ''} required><option value="">Choose a claim</option>{ledger.claims.map(row => <option key={row.id} value={row.id}>S${Number(row.amount).toFixed(2)} · {row.status} · {row.id.slice(0,8)}</option>)}</select></label><label>New status<select name="claimStatus" defaultValue={proposal.claimStatus || ''} required><option value="">Choose status</option><option value="open">Open</option><option value="asked">Asked supplier</option><option value="credited">Credited</option><option value="refused">Refused</option></select></label></>}

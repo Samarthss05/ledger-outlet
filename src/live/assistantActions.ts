@@ -1,8 +1,9 @@
 import type { Ledger, Product } from './types';
-import { addQuote, addStockCount, addUsage, createDelivery, createItem, createProduct, createSupplier, setItemActive, updateClaim, updateItem, updateSupplierLeadTime } from './data';
+import { addBenchmark, addQuote, addStockCount, addUsage, createDelivery, createItem, createProduct, createSupplier, setItemActive, updateClaim, updateItem, updateSupplierLeadTime } from './data';
+import { addAgentMemory } from './memories';
 
 export type AssistantProposal = {
-  kind: 'create_item' | 'edit_item' | 'toggle_item' | 'create_product' | 'create_supplier' | 'record_quote' | 'record_stock' | 'record_usage' | 'set_lead_time' | 'record_delivery' | 'update_claim';
+  kind: 'create_item' | 'edit_item' | 'toggle_item' | 'create_product' | 'create_supplier' | 'record_quote' | 'record_stock' | 'record_usage' | 'set_lead_time' | 'record_delivery' | 'update_claim' | 'record_benchmark' | 'remember_fact';
   itemId: string | null;
   supplierId: string | null;
   productId: string | null;
@@ -22,6 +23,10 @@ export type AssistantProposal = {
   claimId: string | null;
   claimStatus: 'open' | 'asked' | 'credited' | 'refused' | null;
   deliveryLines: { itemId: string | null; quantityOrdered: number | null; quantityDelivered: number | null; quantityCharged: number | null; unitPrice: number | null }[];
+  market: string | null;
+  sourceName: string | null;
+  sourceUrl: string | null;
+  note: string | null;
 };
 
 export async function applyAssistantProposal(accountId: string, proposal: AssistantProposal, fields: FormData, ledger: Ledger) {
@@ -29,6 +34,12 @@ export async function applyAssistantProposal(accountId: string, proposal: Assist
   const bounded = (key: string, max: number) => value(key).slice(0, max);
   const date = value('date');
   const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(Date.parse(`${date}T00:00:00Z`));
+  if (proposal.kind === 'remember_fact') {
+    const content = bounded('note', 500);
+    if (content.length < 2) throw new Error('Enter a fact for Ledger to remember.');
+    await addAgentMemory(accountId, content);
+    return 'Saved that outlet memory. The agent team will consider it in future conversations.';
+  }
   if (proposal.kind === 'update_claim') {
     const claim = ledger.claims.find(row => row.id === value('claimId'));
     const status = value('claimStatus');
@@ -59,6 +70,16 @@ export async function applyAssistantProposal(accountId: string, proposal: Assist
     if (!item || !validDate || !Number.isFinite(price) || price <= 0) throw new Error('Choose an item, date, and positive price per pack.');
     await addQuote(accountId, item.id, date, price, null);
     return `Recorded a S$${price.toFixed(2)} quote for ${item.name} on ${date}.`;
+  }
+  if (proposal.kind === 'record_benchmark') {
+    const product = ledger.products.find(row => row.id === value('productId'));
+    const price = Number(value('price'));
+    const market = bounded('market', 120);
+    const sourceName = bounded('sourceName', 160);
+    const sourceUrl = bounded('sourceUrl', 500);
+    if (!product || !validDate || !Number.isFinite(price) || price <= 0 || market.length < 2 || sourceName.length < 2 || (sourceUrl && !/^https:\/\//i.test(sourceUrl))) throw new Error('Choose a product, valid date, positive unit price, market, and real source. Source links must start with https://.');
+    await addBenchmark(accountId, { product_id: product.id, market, source_name: sourceName, source_url: sourceUrl, observed_on: date, price_per_base: price, basis: 'wholesale', note: bounded('note', 400) });
+    return `Recorded a sourced wholesale reference of S$${price.toFixed(2)} per ${product.base_unit} for ${product.name}.`;
   }
   if (proposal.kind === 'record_stock' || proposal.kind === 'record_usage') {
     const product = ledger.products.find(row => row.id === value('productId'));
