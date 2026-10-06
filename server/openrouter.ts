@@ -8,7 +8,7 @@ export async function openRouterJson<T extends z.ZodType>(name: string, schema: 
   const response = await fetch(process.env.OPENROUTER_API_URL || 'https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST', signal: AbortSignal.timeout(25000),
     headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.APP_URL || 'http://localhost:5173', 'X-Title': 'Ledger Outlet' },
+      'HTTP-Referer': process.env.APP_URL || 'http://localhost:5173', 'X-Title': 'ReStock by Ledger' },
     body: JSON.stringify({ model: process.env.OPENROUTER_MODEL || 'openai/gpt-4.1-mini', temperature: 0,
       max_tokens: maxTokens, provider: { require_parameters: true },
       response_format: { type: 'json_schema', json_schema: { name, strict: true, schema: jsonSchema } },
@@ -33,7 +33,7 @@ export async function openRouterAgentJson<T extends z.ZodType>(name: string, sch
   const response = await fetch(process.env.OPENROUTER_API_URL || 'https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST', signal: AbortSignal.timeout(45000),
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.APP_URL || 'http://localhost:5173', 'X-Title': 'Ledger Outlet' },
+      'HTTP-Referer': process.env.APP_URL || 'http://localhost:5173', 'X-Title': 'ReStock by Ledger' },
     body: JSON.stringify({ model: process.env.OPENROUTER_AGENT_MODEL || 'openai/gpt-5.4', reasoning: { effort: 'medium' },
       max_completion_tokens: maxTokens, provider: { require_parameters: true },
       response_format: { type: 'json_schema', json_schema: { name, strict: true, schema: jsonSchema } },
@@ -57,7 +57,7 @@ export async function openRouterAgentTurn(messages:AgentMessage[], tools:object[
   if (!key) throw new AiError('OpenRouter is not configured.',503);
   const response = await fetch(process.env.OPENROUTER_API_URL || 'https://openrouter.ai/api/v1/chat/completions',{
     method:'POST',signal:AbortSignal.timeout(50000),
-    headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json','HTTP-Referer':process.env.APP_URL || 'http://localhost:5173','X-Title':'Ledger Outlet'},
+    headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json','HTTP-Referer':process.env.APP_URL || 'http://localhost:5173','X-Title':'ReStock by Ledger'},
     body:JSON.stringify({model:process.env.OPENROUTER_AGENT_MODEL || 'openai/gpt-5.4',reasoning:{effort:'medium'},
       max_completion_tokens:1800,provider:{require_parameters:true},parallel_tool_calls:false,
       tools,tool_choice:toolChoice,messages})

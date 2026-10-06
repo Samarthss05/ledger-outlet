@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { authRedirectUrl, needClient } from './supabase';
 import { ThemeToggle } from './ThemeToggle';
+import { BrandLogo } from './BrandLogo';
 
 export function AuthScreen() {
   const [mode, setMode] = useState<'in' | 'up' | 'reset'>('in');
@@ -29,7 +30,7 @@ export function AuthScreen() {
     finally { setBusy(false); }
   }
   return <main className="app auth-wrap">
-    <div className="auth-brand"><div className="logo">LO</div><div><h1>Ledger Outlet</h1><p>Every delivery accounted for.</p></div><ThemeToggle /></div>
+    <div className="auth-brand"><div><BrandLogo className="auth-wordmark" /><h1 className="visually-hidden">ReStock by Ledger</h1><p>One WhatsApp. Sorted.</p></div><ThemeToggle /></div>
     <section className="card pad auth-card">
       <h2>{mode === 'reset' ? 'Reset your password' : mode === 'up' ? 'Create your account' : 'Welcome back'}</h2>
       <p className="muted">Your supplier, delivery and claim records are private to your account.</p>

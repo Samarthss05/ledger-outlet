@@ -1,29 +1,29 @@
 
   :root {
-    --bg:#F4F6F3; --card:#FFFFFF; --card-2:#F5F8F4; --line:#E4E8E1; --line-2:#D2D8CE;
-    --ink:#141A15; --ink-2:#59634F; --ink-3:#868F85;
-    --green:#147A4E; --green-2:#1E9A64; --green-bg:#E6F3EC;
+    --bg:#F7F5F0; --card:#FFFFFF; --card-2:#F2F6F1; --line:#E2E8DF; --line-2:#C8D9CB;
+    --ink:#13261C; --ink-2:#4E6254; --ink-3:#788A7C;
+    --green:#2F7A55; --green-2:#245F42; --green-bg:#DCEBE2;
     --amber:#9A6708; --amber-bg:#FBF1DC;
     --red:#B23A3F; --red-bg:#FBEBEC;
-    --ai:#5B4BB8; --ai-bg:#EDEBF9;
+    --ai:#2F7A55; --ai-bg:#DCEBE2;
     --r-lg:16px; --r-md:12px; --r-sm:9px;
     --sh:0 1px 2px rgba(20,26,21,.04), 0 1px 10px rgba(20,26,21,.045);
     --sh-2:0 4px 22px rgba(20,26,21,.10);
     --sans:"Inter",-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
   }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-      --bg:#0F120F; --card:#171B17; --card-2:#1E231E; --line:#262C26; --line-2:#353D35;
-      --ink:#EDF1EC; --ink-2:#A6AFA5; --ink-3:#7A837A;
-      --green:#5FC894; --green-2:#7FDCAB; --green-bg:#16281F;
+      --bg:#0D1711; --card:#11211A; --card-2:#192B20; --line:#294034; --line-2:#3C5746;
+      --ink:#F7F5F0; --ink-2:#C4D3C8; --ink-3:#95AC9B;
+      --green:#7FC79E; --green-2:#A3D9B7; --green-bg:#193A28;
       --amber:#E0B34E; --amber-bg:#2B2413; --red:#E38089; --red-bg:#2E1B1D;
-      --ai:#A99BEE; --ai-bg:#201C33;
+      --ai:#7FC79E; --ai-bg:#193A28;
       --sh:0 1px 2px rgba(0,0,0,.35); --sh-2:0 4px 22px rgba(0,0,0,.5); } }
   :root[data-theme="dark"] {
-      --bg:#0F120F; --card:#171B17; --card-2:#1E231E; --line:#262C26; --line-2:#353D35;
-      --ink:#EDF1EC; --ink-2:#A6AFA5; --ink-3:#7A837A;
-      --green:#5FC894; --green-2:#7FDCAB; --green-bg:#16281F;
+      --bg:#0D1711; --card:#11211A; --card-2:#192B20; --line:#294034; --line-2:#3C5746;
+      --ink:#F7F5F0; --ink-2:#C4D3C8; --ink-3:#95AC9B;
+      --green:#7FC79E; --green-2:#A3D9B7; --green-bg:#193A28;
       --amber:#E0B34E; --amber-bg:#2B2413; --red:#E38089; --red-bg:#2E1B1D;
-      --ai:#A99BEE; --ai-bg:#201C33;
+      --ai:#7FC79E; --ai-bg:#193A28;
       --sh:0 1px 2px rgba(0,0,0,.35); --sh-2:0 4px 22px rgba(0,0,0,.5); }
 
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }

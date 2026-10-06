@@ -110,15 +110,15 @@ async function routeInbound(db:Db,message:Inbox) {
     if (/^LINK\s+[A-F0-9]{8}$/i.test(message.body.trim())) {
       const provided = message.body.trim().split(/\s+/)[1].toUpperCase();
       if (provided !== owner.link_code || Date.parse(owner.link_code_expires_at) < Date.now()) {
-        await sendOwnerText(message.phone_number_id,message.sender_e164,'That link code has expired or is incorrect. Open Ledger Outlet to get a new code.');
+        await sendOwnerText(message.phone_number_id,message.sender_e164,'That link code has expired or is incorrect. Open ReStock to get a new code.');
         return;
       }
       check(await db.from('ledger_wa_settings').update({verified_at:sgNow()}).eq('account_id',owner.account_id));
-      await sendOwnerText(message.phone_number_id,message.sender_e164,'Your WhatsApp number is linked to Ledger Outlet. Send a stock order here when you are ready.');
+      await sendOwnerText(message.phone_number_id,message.sender_e164,'Your WhatsApp number is linked to ReStock. Send a stock order here when you are ready.');
       return;
     }
     if (!owner.verified_at) {
-      await sendOwnerText(message.phone_number_id,message.sender_e164,'Link this number first. Open Ledger Outlet and send the LINK code shown in WhatsApp orders.');
+      await sendOwnerText(message.phone_number_id,message.sender_e164,'Link this number first. Open ReStock and send the LINK code shown in WhatsApp orders.');
       return;
     }
     await handleOwnerMessage(db,owner,message);
@@ -141,7 +141,7 @@ async function handleOwnerMessage(db:Db,settings:Settings,message:Inbox) {
     check(await db.from('ledger_wa_supplier_orders').update({status:'delivered',received_at:sgNow(),updated_at:sgNow()})
       .eq('id',order.id).in('status',['sent','confirmed','issue','delivered_reported']));
     await sendOwnerText(message.phone_number_id,message.sender_e164,
-      `Marked ${reference} received. Record actual quantities and the invoice in Ledger Outlet for price and shortage tracking.`);
+      `Marked ${reference} received. Record actual quantities and the invoice in ReStock for price and shortage tracking.`);
     return;
   }
   if (/^RECEIVED\b/i.test(message.body.trim())) {
@@ -181,7 +181,7 @@ async function prepareOwnerOrder(db:Db,settings:Settings,message:Inbox) {
   const items = check(itemResult) as OrderItem[];
   const suppliers = check(supplierResult) as OrderSupplier[];
   if (!items.some(item => item.active)) {
-    await sendOwnerText(message.phone_number_id,message.sender_e164,'Your outlet has no active supplier items yet. Add them in Ledger Outlet before ordering.');
+    await sendOwnerText(message.phone_number_id,message.sender_e164,'Your outlet has no active supplier items yet. Add them in ReStock before ordering.');
     return;
   }
   let extracted;
@@ -300,7 +300,7 @@ async function dispatchConfirmedOrder(db:Db,settings:Settings,batch:Batch,messag
   check(await db.from('ledger_wa_orders').update({status:complete?'sent':'partial'}).eq('id',batch.id));
   await sendOwnerText(message.phone_number_id,message.sender_e164,complete
     ? `Sent ${sent} supplier order${sent===1?'':'s'}. I will track their replies here.`
-    : `Sent ${sent} of ${supplierOrders.length} supplier orders. Check Ledger Outlet before retrying; an uncertain send may already have reached a supplier.`);
+    : `Sent ${sent} of ${supplierOrders.length} supplier orders. Check ReStock before retrying; an uncertain send may already have reached a supplier.`);
 }
 
 async function handleSupplierMessage(db:Db,message:Inbox) {
