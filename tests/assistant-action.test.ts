@@ -98,6 +98,29 @@ test('coordinator delegates pricing and stock analysis, then review agent checks
   });
 });
 
+test('partial specialist failure is disclosed instead of presenting a complete analysis', async () => {
+  await withMockedServer((_url, body) => {
+    const name = body.response_format.json_schema.name;
+    if (name === 'ledger_team_plan') return { choices: [{ message: { content: JSON.stringify({ views: ['prices', 'stock'], search: 'Coke', from: null, to: null, prepareChange: false }) } }] };
+    if (name === 'ledger_specialist_finding') {
+      if (body.messages[0].content.includes('Pricing agent')) return { choices: [{ message: { content: '' } }] };
+      return { choices: [{ message: { content: JSON.stringify({ summary: 'Coke has two days of cover.', factIds: ['F2'] }) } }] };
+    }
+    if (name === 'ledger_team_answer' || name === 'ledger_team_review') {
+      const prompt = body.messages[1].content;
+      assert.deepEqual(JSON.parse(prompt).unavailable, ['Pricing']);
+      return { choices: [{ message: { content: JSON.stringify({ answer: 'Coke has two days of cover, so review stock now.', factIds: ['F2'] }) } }] };
+    }
+    throw new Error(`Unexpected model role: ${name}`);
+  }, async state => {
+    const result = await handleLiveAi({ action: 'ask', accountId, question: 'Should I buy Coke now?' }, 'Bearer preview-session') as { answer: string; evidence: string[] };
+    assert.match(result.answer, /could not complete the Pricing analysis/);
+    assert.ok(result.evidence.includes('Agent unavailable · Pricing'));
+    assert.ok(result.evidence.some(line => line.startsWith('Agent · Stock:')));
+    assert.deepEqual(state.writes, []);
+  });
+});
+
 test('agents prepare multiple independent changes and require an independent action review', async () => {
   await withMockedServer((_url, body) => {
     const name = body.response_format.json_schema.name;
