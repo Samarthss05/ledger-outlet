@@ -26,6 +26,10 @@ async function withMockedServer(mock: (url: string, body: any) => unknown, run: 
       const body = JSON.parse(String(init?.body));
       assert.equal(url, 'https://api.openai.com/v1/chat/completions');
       assert.equal(body.model, 'gpt-5.4-mini');
+      if (body.response_format?.json_schema?.name === 'restock_chat_intent_v1') {
+        assert.equal(body.reasoning_effort, 'none');
+        return respond({ choices: [{ message: { content: JSON.stringify({ intent: 'OTHER', confidence: 0.99 }) } }] });
+      }
       assert.equal(body.reasoning_effort, 'low');
       assert.equal(body.provider, undefined);
       assert.equal((init?.headers as Record<string, string>).Authorization, 'Bearer preview-key');

@@ -3,11 +3,13 @@ import { z } from 'zod';
 import { AiError, openAiAgentJson, openAiJson } from './openai.js';
 import { fetchRetailReferences } from './singstat.js';
 import { runAgentTeam } from './agentTeam.js';
+import { routeChatMessage } from './chatOrders.js';
 
 const requestSchema = z.object({
   action: z.enum(['ask','parse','brief','draft','insights','extract_invoice']), accountId: z.string().uuid(),
   question: z.string().trim().min(2).max(500).optional(), text: z.string().trim().min(3).max(2000).optional(), itemId: z.string().uuid().optional(),
   conversationId: z.string().uuid().optional(),
+  requestId: z.string().uuid().optional(),
   imageDataUrl: z.string().max(2_800_000).optional()
 });
 const deliveryLinePlan = z.object({itemId:z.string().nullable(),quantityOrdered:z.number().nullable(),quantityDelivered:z.number().nullable(),quantityCharged:z.number().nullable(),unitPrice:z.number().nullable()});
@@ -125,6 +127,10 @@ export async function handleLiveAi(body:unknown, authorization:string|undefined)
     if (!thread) throw new AiError('Conversation not found in this outlet.',404);
     const rows = check(await db.from('ledger_conversation_messages').select('role,body').eq('account_id',input.accountId).eq('conversation_id',input.conversationId).order('created_at',{ascending:false}).limit(16)) || [];
     previousTurns = rows.reverse().map((row:{role:string;body:string}) => ({role:row.role,body:row.body.slice(0,600)}));
+  }
+  if (!simpleItemName && !rememberedText) {
+    const routed = await routeChatMessage(db,input.accountId,input.question,input.requestId);
+    if (routed) return routed;
   }
   const agent = simpleItemName || rememberedText ? {prepareChange:true,answer:simpleItemName ? 'I can add that item after you review its supplier and pack details.' : 'I can remember that for this outlet after you review it.',evidence:[]} :
     await runAgentTeam(db,input.accountId,account.name,input.question,previousTurns);

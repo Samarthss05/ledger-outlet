@@ -7,11 +7,13 @@ import { existsSync } from 'node:fs';
 import { z } from 'zod';
 import { AiError } from './openai.js';
 import { handleLiveAi } from './liveAi.js';
+import { handleChatOrderAction } from './chatOrders.js';
 import { fetchRetailReferences } from './singstat.js';
 import { handleWhatsappPreview } from './whatsappPreview.js';
 
 const app = Fastify({ logger: true, bodyLimit: 2_800_000 });
 app.post('/api/ai', async req => handleLiveAi(req.body, req.headers.authorization));
+app.post('/api/chat-orders', async req => handleChatOrderAction(req.body, req.headers.authorization));
 app.post('/api/whatsapp-preview', async req => handleWhatsappPreview(req.body, req.headers.authorization));
 app.get('/api/whatsapp-status', async () => ({ configured: Boolean(process.env.SUPABASE_URL &&
   (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY) &&

@@ -3,8 +3,10 @@ import { createConversation, deleteConversation, listConversations, loadConversa
 import { applyAssistantProposal, type AssistantProposal } from './assistantActions';
 import { deleteAgentMemory, listAgentMemories, type AgentMemory } from './memories';
 import type { Ledger, Product } from './types';
+import { chatOrderId, chatOrderRequest, type ChatOrderView } from './chatOrders';
+import { ChatOrderCard } from './ChatOrderCard';
 
-const suggestions = ['Find my biggest buying opportunity', 'What should I restock this week?', 'Investigate supplier shortages', 'Add a new supplier item'];
+const suggestions = ['Order rice 2 bags tomorrow', 'Repeat my usual order', 'Find my biggest buying opportunity', 'What should I restock this week?'];
 const shortDate = (value: string) => new Date(value).toLocaleDateString('en-SG', { day: 'numeric', month: 'short' });
 
 export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerChange }: { accountId: string; accountName: string; token: string; ledger: Ledger | null; onLedgerChange: () => Promise<void> }) {
@@ -23,15 +25,17 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState('');
   const [proposals, setProposals] = useState<AssistantProposal[]>([]);
+  const [orders, setOrders] = useState<Record<string,ChatOrderView>>({});
   const requestId = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const requestKeyRef = useRef<{text:string;id:string}|null>(null);
   const currentAccount = useRef(accountId);
   currentAccount.current = accountId;
 
   useEffect(() => {
     const current = ++requestId.current;
-    setChats([]); setMemories([]); setActiveId(null); setMessages([]); setQuestion(''); setError(''); setProposals([]); setLoading(true); setBusy(false); setPendingQuestion(''); setHistoryOpen(false);
+    setChats([]); setMemories([]); setActiveId(null); setMessages([]); setOrders({}); setQuestion(''); setError(''); setProposals([]); setLoading(true); setBusy(false); setPendingQuestion(''); setHistoryOpen(false); requestKeyRef.current=null;
     listAgentMemories(accountId).then(rows => { if (requestId.current === current) setMemories(rows); }).catch(cause => { if (requestId.current === current) setError(cause instanceof Error ? cause.message : 'Could not load outlet memory.'); });
     listConversations(accountId).then(async result => {
       if (requestId.current !== current) return;
@@ -39,7 +43,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
       if (result.rows[0]) {
         const rows = await loadConversation(accountId, result.rows[0].id);
         if (requestId.current !== current) return;
-        setActiveId(result.rows[0].id); setMessages(rows);
+        setActiveId(result.rows[0].id); setMessages(rows); void hydrateOrders(rows,current);
       }
     }).catch(cause => { if (requestId.current === current) setError(cause instanceof Error ? cause.message : 'Could not load chats.'); })
       .finally(() => { if (requestId.current === current) setLoading(false); });
@@ -60,7 +64,16 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
     composer.style.height = `${Math.min(composer.scrollHeight, 160)}px`;
   }, [question]);
 
-  const newChat = () => { requestId.current++; setActiveId(null); setMessages([]); setQuestion(''); setError(''); setProposals([]); setHistoryOpen(false); setLoading(false); setLoadingThread(false); };
+  const hydrateOrders = async (rows:ConversationMessage[],current:number) => {
+    const ids=[...new Set(rows.map(row=>chatOrderId(row.evidence)).filter((id):id is string=>!!id))];
+    if (!ids.length) return;
+    try {
+      const result=await chatOrderRequest<{orders:ChatOrderView[]}>(token,{accountId,action:'list',ids:ids.slice(0,40)});
+      if (requestId.current===current) setOrders(previous=>({...previous,...Object.fromEntries(result.orders.map(order=>[order.id,order]))}));
+    } catch (cause) { if (requestId.current===current) setError(cause instanceof Error?cause.message:'Could not load order cards.'); }
+  };
+
+  const newChat = () => { requestId.current++; requestKeyRef.current=null; setActiveId(null); setMessages([]); setQuestion(''); setError(''); setProposals([]); setHistoryOpen(false); setLoading(false); setLoadingThread(false); };
   const openChat = async (chat: Conversation) => {
     if (busy || chat.id === activeId) { setHistoryOpen(false); return; }
     const current = ++requestId.current;
@@ -68,7 +81,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
     try {
       const rows = await loadConversation(accountId, chat.id);
       if (requestId.current !== current) return;
-      setActiveId(chat.id); setMessages(rows); setQuestion('');
+      setActiveId(chat.id); setMessages(rows); setQuestion(''); void hydrateOrders(rows,current);
     } catch (cause) { if (requestId.current === current) setError(cause instanceof Error ? cause.message : 'Could not open chat.'); }
     finally { if (requestId.current === current) setLoadingThread(false); }
   };
@@ -76,18 +89,22 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
   const ask = async (text: string, action: 'ask' | 'brief' = 'ask') => {
     const prompt = text.trim();
     if (busy || prompt.length < 2) return;
+    if (!requestKeyRef.current || requestKeyRef.current.text!==prompt) requestKeyRef.current={text:prompt,id:crypto.randomUUID()};
+    const requestId=requestKeyRef.current.id;
     const sentFromComposer = action === 'ask' && question.trim() === prompt;
     if (sentFromComposer) setQuestion('');
     setBusy(true); setPendingQuestion(prompt); setError('');
-    let answer = ''; let evidence: string[] = []; let nextId = activeId; let nextProposals: AssistantProposal[] = [];
+    let answer = ''; let evidence: string[] = []; let nextId = activeId; let nextProposals: AssistantProposal[] = []; let nextOrder:ChatOrderView|undefined;
     try {
-      const response = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action, accountId, ...(action === 'ask' ? { question: prompt, ...(activeId ? { conversationId: activeId } : {}) } : {}) }) });
-      const result = await response.json() as { answer?: string; brief?: string; evidence?: string[]; proposals?: AssistantProposal[]; proposal?: AssistantProposal; error?: string };
+      const response = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action, accountId, ...(action === 'ask' ? { question: prompt, requestId, ...(activeId ? { conversationId: activeId } : {}) } : {}) }) });
+      const result = await response.json() as { answer?: string; brief?: string; evidence?: string[]; order?:ChatOrderView; proposals?: AssistantProposal[]; proposal?: AssistantProposal; error?: string };
       if (!response.ok) throw new Error(result.error || 'Could not answer that question.');
       if (currentAccount.current !== accountId) return;
       answer = result.answer || result.brief || '';
       if (!answer) throw new Error('The assistant returned an empty answer. Please try again.');
       evidence = Array.isArray(result.evidence) ? result.evidence : [];
+      nextOrder=result.order;
+      if (nextOrder) setOrders(previous=>({...previous,[nextOrder!.id]:nextOrder!}));
       nextProposals = Array.isArray(result.proposals) ? result.proposals : result.proposal ? [result.proposal] : [];
       if (!nextId) {
         const created = await createConversation(accountId, prompt.replace(/\s+/g, ' ').slice(0, 80));
@@ -99,6 +116,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
       setProposals(nextProposals);
       setChats(previous => [saved.conversation, ...previous.filter(chat => chat.id !== saved.conversation.id)]);
       setHistoryOpen(false);
+      requestKeyRef.current=null;
     } catch (cause) {
       if (currentAccount.current !== accountId) return;
       if (answer) {
@@ -112,6 +130,31 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
         setError(cause instanceof Error ? cause.message : 'Could not answer that question.');
       }
     } finally { if (currentAccount.current === accountId) { setBusy(false); setPendingQuestion(''); } }
+  };
+
+  const actOnOrder = async (order:ChatOrderView,action:'revise'|'confirm'|'cancel'|'supplier_reply'|'review_reply'|'receive',payload:Record<string,unknown>,userText?:string) => {
+    if (busy) return false;
+    setBusy(true); setError('');
+    try {
+      const result=await chatOrderRequest<{order:ChatOrderView;answer:string}>(token,{accountId,action,orderId:order.id,version:order.version,...payload});
+      if (currentAccount.current!==accountId) return false;
+      setOrders(previous=>({...previous,[order.id]:result.order}));
+      if (activeId) {
+        if (userText) {
+          const saved=await saveTurn(accountId,activeId,userText,result.answer,[]);
+          setMessages(previous=>[...previous,...saved.messages]);
+          setChats(previous=>[saved.conversation,...previous.filter(chat=>chat.id!==saved.conversation.id)]);
+        } else {
+          const saved=await saveActionResult(accountId,activeId,result.answer);
+          setMessages(previous=>[...previous,saved]);
+        }
+      }
+      return true;
+    } catch (cause) {
+      setError(cause instanceof Error?cause.message:'Could not update that order.');
+      try {const refreshed=await chatOrderRequest<{order:ChatOrderView}>(token,{accountId,action:'get',orderId:order.id});setOrders(previous=>({...previous,[order.id]:refreshed.order}));} catch { /* keep the visible version */ }
+      return false;
+    } finally { if (currentAccount.current===accountId) setBusy(false); }
   };
 
   const confirmAction = async (event: FormEvent<HTMLFormElement>) => {
@@ -164,6 +207,11 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
 
   const shown = chats.filter(chat => chat.title.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
   const active = chats.find(chat => chat.id === activeId);
+  const latestOrderMessage = new Map<string,string>();
+  for (const message of messages) {
+    const id=chatOrderId(message.evidence);
+    if (message.role==='assistant' && id) latestOrderMessage.set(id,message.id);
+  }
   return <div className="ask-workspace ask-workspace-v2">
     <header className="ask-page-head"><div><p className="eyebrow">RESTOCK ASSISTANT</p><h2>Ask ReStock</h2><p>Ask about {accountName}'s records or tell the agents what to update.</p></div><button className="ask-new" onClick={newChat} disabled={busy}>＋ New chat</button></header>
     <div className="ask-mobile-history"><button onClick={() => setHistoryOpen(value => !value)} aria-expanded={historyOpen}>{historyOpen ? '← Back to chat' : `☰ Chats${chats.length ? ` (${chats.length})` : ''}`}</button><span>{active?.title || 'New conversation'}</span></div>
@@ -175,7 +223,11 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
         <details className="ask-memory"><summary>Outlet memory <span>{memories.length}</span></summary><p>Tell ReStock “remember that…” to add a fact for future chats.</p>{memories.length ? <ul>{memories.map(memory => <li key={memory.id}><span>{memory.content}</span><button type="button" onClick={() => void forgetMemory(memory)} aria-label={`Forget ${memory.content}`}>Forget</button></li>)}</ul> : <p>No saved memories yet.</p>}</details>
       </aside>
       <section className="ask-chat-main" aria-label="ReStock conversation"><div className="ask-thread-top"><div><span className="ai-spark small" aria-hidden="true"><AgentMark /></span><div><strong>ReStock assistant</strong><small>{accountName} · {active ? 'Saved conversation' : 'New conversation'}</small></div></div><div className="ask-thread-actions">{messages.length > 0 && <button type="button" className="ask-brief-shortcut" title="Generate morning brief" aria-label="Generate morning brief" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ <span>Morning brief</span></button>}</div></div>
-        <div className="ask-thread-scroll" ref={scrollRef} aria-live="polite">{loading || loadingThread ? <p className="muted">Loading conversation…</p> : messages.length === 0 && !pendingQuestion ? <div className="ask-start"><span className="chat-mark" aria-hidden="true"><AgentMark /></span><h3>What would you like to do?</h3><p>Pricing, stock, catalog, supplier, and finance agents can investigate together. Review every proposed change before it is saved.</p><div className="ask-start-suggestions">{suggestions.map(text => <button key={text} disabled={busy} onClick={() => void ask(text)}>{text}<span aria-hidden="true">↗</span></button>)}</div><button className="ask-brief-link" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ Generate morning brief</button></div> : <>{messages.map(entry => <ChatTurn key={entry.id} role={entry.role} body={entry.body} evidence={entry.evidence} />)}{pendingQuestion && <><ChatTurn role="user" body={pendingQuestion} /><div className="chat-turn assistant chat-pending" role="status"><span className="chat-turn-avatar" aria-hidden="true"><AgentMark /></span><div className="chat-turn-body"><strong>ReStock assistant</strong><p>{waitingSeconds < 4 ? 'Planning the task…' : waitingSeconds < 20 ? 'Specialists are checking your records…' : 'Reviewing the findings…'}</p></div></div></>}</>}</div>
+        <div className="ask-thread-scroll" ref={scrollRef} aria-live="polite">{loading || loadingThread ? <p className="muted">Loading conversation…</p> : messages.length === 0 && !pendingQuestion ? <div className="ask-start"><span className="chat-mark" aria-hidden="true"><AgentMark /></span><h3>What would you like to do?</h3><p>Send a stock request in your own words. ReStock will split it by supplier and ask you to review it. You can also ask about prices, stock and your ledger.</p><div className="ask-start-suggestions">{suggestions.map(text => <button key={text} disabled={busy} onClick={() => void ask(text)}>{text}<span aria-hidden="true">↗</span></button>)}</div><button className="ask-brief-link" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ Generate morning brief</button></div> : <>{messages.map(entry => {
+          const orderId=chatOrderId(entry.evidence);
+          const order=orderId ? orders[orderId] : undefined;
+          return <div key={entry.id}><ChatTurn role={entry.role} body={entry.body} evidence={entry.evidence} />{entry.role==='assistant' && orderId && latestOrderMessage.get(orderId)===entry.id && order && <ChatOrderCard order={order} ledger={ledger} busy={busy} onAction={(action,payload,userText)=>actOnOrder(order,action,payload,userText)} />}</div>;
+        })}{pendingQuestion && <><ChatTurn role="user" body={pendingQuestion} /><div className="chat-turn assistant chat-pending" role="status"><span className="chat-turn-avatar" aria-hidden="true"><AgentMark /></span><div className="chat-turn-body"><strong>ReStock assistant</strong><p>{waitingSeconds < 4 ? 'Planning the task…' : waitingSeconds < 20 ? 'Specialists are checking your records…' : 'Reviewing the findings…'}</p></div></div></>}</>}</div>
         <form className="ask-input" onSubmit={(event: FormEvent) => { event.preventDefault(); void ask(question); }}><label className="visually-hidden" htmlFor="ledger-question">Ask ReStock</label><textarea ref={composerRef} id="ledger-question" value={question} onChange={event => setQuestion(event.target.value)} placeholder="Message ReStock assistant…" minLength={2} maxLength={500} required rows={1} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /><div><span>Enter to send · Shift+Enter for a new line</span><button type="submit" disabled={busy || question.trim().length < 2} aria-label="Send question">↑</button></div></form>
       </section>
     </div>
@@ -188,7 +240,7 @@ function AgentMark() { return <img src="/brand/restock-mark-reversed.svg" alt=""
 
 function ChatTurn({ role, body, evidence = [] }: { role: 'user' | 'assistant'; body: string; evidence?: string[] }) {
   const agentWork = evidence.filter(line => line.startsWith('Agent · '));
-  const records = evidence.filter(line => !line.startsWith('Agent · '));
+  const records = evidence.filter(line => !line.startsWith('Agent · ') && !line.startsWith('Chat order · '));
   return <div className={`chat-turn ${role}`}>
     {role === 'assistant' && <span className="chat-turn-avatar" aria-hidden="true"><AgentMark /></span>}
     <div className="chat-turn-body">

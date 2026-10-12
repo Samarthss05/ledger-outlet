@@ -56,6 +56,15 @@ test('a shared spoken name across suppliers requires a precise pack or supplier'
   assert.equal(precise.ready,true);
 });
 
+test('chat drafts can omit supplier phone numbers but cannot accept an invented item match', () => {
+  const chatSuppliers=suppliers.map(supplier=>({...supplier,whatsapp_e164:null}));
+  const valid=validateOutletOrder(parsed,items,chatSuppliers,now,undefined,{channel:'chat'});
+  assert.equal(valid.ready,true);
+  const invented=validateOutletOrder({...parsed,lines:[{...parsed.lines[0],itemId:'oil'}]},items,chatSuppliers,now,undefined,{channel:'chat'});
+  assert.equal(invented.ready,false);
+  assert.ok(invented.issues.some(issue=>issue.includes('exact outlet item')));
+});
+
 test('confirmation and supplier replies require one unambiguous order', () => {
   const batches = [{confirmation_code:'ABC123',id:'one'},{confirmation_code:'DEF456',id:'two'}];
   assert.equal(selectPendingBatch(batches,null),null);

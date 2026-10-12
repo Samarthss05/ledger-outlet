@@ -13,6 +13,7 @@
     "build": "tsc --noEmit && vite build && esbuild server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-server/index.js",
     "test:csv": "tsx --test tests/csv.test.ts",
     "test:ai": "tsx --test tests/assistant-action.test.ts",
+    "test:chat-orders": "tsx --test tests/chat-order.test.ts",
     "test:whatsapp": "tsx --test tests/whatsapp-order.test.ts",
     "start": "node dist-server/index.js"
   },

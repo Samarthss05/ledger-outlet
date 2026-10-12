@@ -17,9 +17,9 @@ const supplierStatus:Record<string,string> = {
 const plannedNumber = '+65 9610 9538';
 const initial:WhatsAppState = {settings:null,orders:[]};
 
-export function WhatsAppOrdersPanel({accountId,accountName,token,ledger,onLedgerChange,onManageCatalog}:{
+export function WhatsAppOrdersPanel({accountId,accountName,token,ledger,onLedgerChange,onManageCatalog,onChat}:{
   accountId:string;accountName:string;token:string;ledger:Ledger;
-  onLedgerChange:()=>Promise<void>;onManageCatalog:()=>void;
+  onLedgerChange:()=>Promise<void>;onManageCatalog:()=>void;onChat:()=>void;
 }) {
   const [state,setState] = useState<WhatsAppState>(initial);
   const [connected,setConnected] = useState(false);
@@ -82,8 +82,9 @@ export function WhatsAppOrdersPanel({accountId,accountName,token,ledger,onLedger
   const readySuppliers = ledger.suppliers.filter(supplier => supplier.whatsapp_e164 && supplier.delivery_days?.length && supplier.cutoff_time).length;
   const mappedItems = ledger.items.filter(item => item.active && item.supplier_id && item.unit).length;
   return <div className="wa-workspace">
-    <header className="wa-heading"><div><p className="eyebrow">WHATSAPP ORDER DESK · {accountName.toUpperCase()}</p><h2>Orders start in a message</h2><p>Send one message. Ledger checks each line, splits it by supplier, and asks for approval before sending.</p></div>
+    <header className="wa-heading"><div><p className="eyebrow">ORDER DESK · {accountName.toUpperCase()}</p><h2>Orders start in a message</h2><p>Chat ordering is available now. ReStock checks each line, splits it by supplier and asks for your confirmation.</p></div>
       <span className={connected?'wa-connection live':'wa-connection'}>{connected?'Cloud API configured':'Awaiting Meta connection'}</span></header>
+    <div className="wa-chat-launch"><div><strong>Place and track orders in chat</strong><p>Type a stock request, review exact items, then confirm. Supplier replies can be simulated in the same conversation until WhatsApp is connected.</p></div><button type="button" onClick={onChat}>Open order chat →</button></div>
     <div className="wa-intro"><div><span className="wa-intro-kicker">PLANNED SHARED LINE</span><strong>{plannedNumber}</strong><p>This number is not active in Ledger until Meta onboarding and the approved message templates are complete.</p></div>
       <div className="wa-intro-flow"><span>1 · Message</span><span>2 · Review</span><span>3 · Confirm</span><span>4 · Track</span></div></div>
     {error && <p className="wa-feedback error" role="alert">{error}</p>}

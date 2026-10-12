@@ -8,6 +8,7 @@ export type OrderSupplier = {
 export type OrderItem = {
   id: string; supplier_id: string; name: string; unit: string;
   aliases: string[]; order_unit_aliases: string[]; active: boolean;
+  product_id?: string | null; base_quantity?: number | null;
 };
 export type OrderLine = { itemId: string; itemName: string; supplierId: string; quantity: number; unit: string; rawText: string };
 export type OrderGroup = { supplierId: string; supplierName: string; supplierPhone: string | null; lines: OrderLine[] };
@@ -38,8 +39,9 @@ const extractedJson = { type: 'object', additionalProperties: false,
 export type ExtractedOrder = z.infer<typeof extractedShape>;
 const sgDate = (date: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 const sgClock = (date: Date) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Singapore', hour: '2-digit', minute: '2-digit', hour12: false }).format(date);
-const normalizeUnit = (value: string) => value.toLocaleLowerCase().normalize('NFKC').replace(/[^a-z0-9]+/g, ' ').trim().replace(/s$/, '');
-const normalizeName = (value:string) => value.toLocaleLowerCase().normalize('NFKC').replace(/[^a-z0-9]+/g,' ').trim();
+const normalizeUnit = (value: string) => value.toLocaleLowerCase().normalize('NFKC').replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/s$/, '');
+const normalizeName = (value:string) => value.toLocaleLowerCase().normalize('NFKC').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+const containsName = (spoken:string,name:string) => !!name && ` ${spoken} `.includes(` ${name} `);
 const validDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value + 'T00:00:00Z')) && new Date(value + 'T00:00:00Z').toISOString().slice(0,10) === value;
 const dayOfWeek = (value: string) => new Date(value + 'T00:00:00Z').getUTCDay();
 const humanDate = (value: string) => new Intl.DateTimeFormat('en-SG', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value + 'T00:00:00Z'));
@@ -57,7 +59,7 @@ export async function extractOutletOrder(text: string, items: OrderItem[], suppl
     })) }), 1800);
 }
 
-export function validateOutletOrder(extracted: ExtractedOrder, items: OrderItem[], suppliers: OrderSupplier[], now = new Date(), ownerPhone?:string): OrderPreview {
+export function validateOutletOrder(extracted: ExtractedOrder, items: OrderItem[], suppliers: OrderSupplier[], now = new Date(), ownerPhone?:string, options:{channel?:'whatsapp'|'chat'} = {}): OrderPreview {
   const issues = [...extracted.unmatched.map(raw => `Could not match “${raw.slice(0,100)}” to this outlet's items.`)];
   const itemMap = new Map(items.filter(item => item.active).map(item => [item.id,item]));
   const supplierMap = new Map(suppliers.map(supplier => [supplier.id,supplier]));
@@ -73,6 +75,10 @@ export function validateOutletOrder(extracted: ExtractedOrder, items: OrderItem[
     const competing = items.filter(other => other.active && other.id !== item.id &&
       [other.name,...(other.aliases || [])].some(name => itemNames.includes(normalizeName(name))));
     const spoken = normalizeName(raw.rawText);
+    if (!itemNames.some(name => containsName(spoken,name))) {
+      issues.push(`Confirm the exact outlet item for “${raw.rawText.slice(0,100)}”.`);
+      continue;
+    }
     if (competing.length && !spoken.includes(normalizeName(item.name)) &&
       !spoken.includes(normalizeName(supplierMap.get(item.supplier_id)?.name || 'NO-SUPPLIER'))) {
       issues.push(`“${raw.rawText.slice(0,100)}” matches more than one supplier item. Name the pack or supplier.`);
@@ -95,8 +101,8 @@ export function validateOutletOrder(extracted: ExtractedOrder, items: OrderItem[
   const groups: OrderGroup[] = [...new Set(lines.map(line => line.supplierId))].map(id => {
     const supplier = supplierMap.get(id)!;
     const supplierLines = lines.filter(line => line.supplierId === id);
-    if (!supplier.whatsapp_e164) issues.push(`Add a WhatsApp number for ${supplier.name}.`);
-    if (ownerPhone && supplier.whatsapp_e164 === ownerPhone) issues.push(`${supplier.name}'s number is the same as the owner number.`);
+    if (options.channel !== 'chat' && !supplier.whatsapp_e164) issues.push(`Add a WhatsApp number for ${supplier.name}.`);
+    if (options.channel !== 'chat' && ownerPhone && supplier.whatsapp_e164 === ownerPhone) issues.push(`${supplier.name}'s number is the same as the owner number.`);
     const templateLines = supplierLines.map(line => `${line.itemName} ×${line.quantity} ${line.unit}`).join('; ');
     if (templateLines.length > 850) issues.push(`The order for ${supplier.name} is too long for one supplier message. Split it into two messages.`);
     if (!supplier.delivery_days?.length) issues.push(`Set delivery days for ${supplier.name}.`);
