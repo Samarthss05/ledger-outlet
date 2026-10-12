@@ -73,17 +73,19 @@ async function getOrder(db: Db, accountId: string, orderId: string) {
   return parseOrder(row);
 }
 
-const intents=['ORDER','ORDER_USUAL','ORDER_REPEAT','ORDER_CHANGE','ORDER_CANCEL','ORDER_STATUS','DELIVERY_REPORT','MENU','HUMAN','OTHER'] as const;
+const intents=['ORDER','ORDER_USUAL','ORDER_REPEAT','ORDER_REVIEW','ORDER_CHANGE','ORDER_CANCEL','ORDER_STATUS','DELIVERY_REPORT','LIST_VIEW','MENU','HUMAN','OTHER'] as const;
 const intentShape = z.object({intent:z.enum(intents),confidence:z.number().min(0).max(1)});
 const intentJson = {type:'object',additionalProperties:false,required:['intent','confidence'],properties:{intent:{type:'string',enum:intents},confidence:{type:'number'}}};
 
 async function classify(text:string) {
   if (/^\s*(?:menu|help|\?)\s*$/i.test(text)) return {intent:'MENU',confidence:1};
+  if (/^\s*(?:my list|my items|my shop)\s*[.!]?\s*$/i.test(text)) return {intent:'LIST_VIEW',confidence:1};
+  if (/^\s*(?:ok|okay|yes|send|confirm|ok send|send it|confirm order)\s*[.!]?\s*$/i.test(text)) return {intent:'ORDER_REVIEW',confidence:1};
   if (/^\s*(?:usual|my usual order|repeat my usual order)\s*[.!]?\s*$/i.test(text)) return {intent:'ORDER_USUAL',confidence:1};
   if (/^\s*(?:same as last time|repeat last order|repeat my last order)\s*[.!]?\s*$/i.test(text)) return {intent:'ORDER_REPEAT',confidence:1};
   if (/^\s*(?:stop|unsubscribe)\s*[.!]?\s*$/i.test(text)) return {intent:'MENU',confidence:1};
   return openAiJson('restock_chat_intent_v1',intentShape,intentJson,
-    'Classify this message to a Singapore shop purchasing assistant. ORDER means the owner is placing a new order, with item(s) and quantity, including informal English, Chinese, Malay or Tamil. ORDER_USUAL means build a new order from fresh stock and usage data. ORDER_REPEAT means copy the last confirmed order. ORDER_CHANGE or ORDER_CANCEL means change/cancel an existing order. ORDER_STATUS asks about an existing order or supplier reply. DELIVERY_REPORT reports arrival, shortage or lateness. MENU asks what the assistant can do. HUMAN requests a person. OTHER covers catalog edits, prices, stock advice, general ledger questions, thanks and ambiguous requests. Never infer that a question about restocking is itself an order. Return only the schema.',
+    'Classify this message to a Singapore shop purchasing assistant. ORDER means the owner is placing a new order, with item(s) and quantity, including informal English, Chinese, Malay or Tamil. ORDER_USUAL means build a new order from fresh stock and usage data. ORDER_REPEAT means copy the last confirmed order. ORDER_REVIEW means an owner says yes, send or confirm without using the order review button; it must NEVER confirm automatically. ORDER_CHANGE or ORDER_CANCEL means change/cancel an existing order. ORDER_STATUS asks about an existing order or supplier reply. DELIVERY_REPORT reports arrival, shortage or lateness. LIST_VIEW asks to see the current outlet item list. MENU asks what the assistant can do. HUMAN requests a person. OTHER covers catalog edits, prices, stock advice, general ledger questions, thanks and ambiguous requests. Never infer that a question about restocking is itself an order. Return only the schema.',
     text,350);
 }
 
@@ -104,14 +106,20 @@ export async function routeChatMessage(db:Db,accountId:string,text:string,reques
   const intent=classification.intent;
   if (intent === 'OTHER') return null;
   if (intent === 'MENU') return {answer:'In chat you can say “rice 2 bags tomorrow”, “usual” for a stock-based draft, “repeat last order”, “order status”, “add a supplier”, “record stock”, or ask about prices. Every order and ledger change needs your review. Supplier communication is simulated here until WhatsApp is connected.',evidence:[]};
+  if (intent === 'LIST_VIEW') {
+    const ctx=await context(db,accountId);
+    const active=ctx.items.filter(item=>item.active);
+    return {answer:active.length?`Your outlet has ${active.length} active supplier item${active.length===1?'':'s'}. ${active.slice(0,20).map(item=>`${item.name} (${item.unit}, ${ctx.suppliers.find(supplier=>supplier.id===item.supplier_id)?.name || 'supplier not set'})`).join('; ')}${active.length>20?'; and more in Catalog':''}. Open Catalog to edit the list.`:'Your outlet item list is empty. Add a supplier and its items in Catalog before ordering.',evidence:[]};
+  }
   if (intent === 'HUMAN') return {answer:'A live support handoff is not connected in this pilot. Your request has not been sent to a person. Please contact the ReStock team directly for urgent help.',evidence:[]};
-  if (intent === 'ORDER_STATUS' || intent === 'ORDER_CHANGE' || intent === 'ORDER_CANCEL' || intent === 'DELIVERY_REPORT') {
+  if (intent === 'ORDER_STATUS' || intent === 'ORDER_REVIEW' || intent === 'ORDER_CHANGE' || intent === 'ORDER_CANCEL' || intent === 'DELIVERY_REPORT') {
     const rows=checked(await db.from('ledger_chat_orders').select('*').eq('account_id',accountId).order('created_at',{ascending:false}).limit(10)) as ChatOrder[];
-    const target=intent==='ORDER_STATUS' ? rows[0] : rows.find(row => intent==='ORDER_CHANGE' ? row.status==='awaiting_review' : ['awaiting_review','confirmed'].includes(row.status));
+    const target=intent==='ORDER_STATUS' ? rows[0] : rows.find(row => ['ORDER_CHANGE','ORDER_REVIEW'].includes(intent) ? row.status==='awaiting_review' : ['awaiting_review','confirmed'].includes(row.status));
     if (!target) return {answer:'I found no relevant chat order yet. Send an item, quantity, pack unit and delivery day to start one.',evidence:[]};
     const order=viewOrder(target,await context(db,accountId));
     const statuses=Object.values(order.supplier_updates).map(update=>update.status);
     const answer=intent==='ORDER_STATUS' ? `Latest chat order: ${order.status.replaceAll('_',' ')}. ${statuses.length ? `Supplier simulations: ${statuses.join(', ')}.` : 'No supplier replies recorded yet.'}`
+      : intent==='ORDER_REVIEW' ? 'Please check the supplier split below and select Confirm order. A typed “OK” never confirms a supplier order.'
       : intent==='ORDER_CHANGE' ? 'Open the order card below and edit its lines or delivery date. Every edit creates a new version that needs confirmation.'
       : intent==='ORDER_CANCEL' ? 'Use Cancel on the order card. A confirmed order becomes a cancellation request for supplier follow-up.'
       : 'Open the order card to mark arrival. If quantities or prices differ, record the actual delivery in the ledger.';
