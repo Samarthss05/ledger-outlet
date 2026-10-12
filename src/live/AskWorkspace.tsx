@@ -3,11 +3,12 @@ import { createConversation, deleteConversation, listConversations, loadConversa
 import { applyAssistantProposal, type AssistantProposal } from './assistantActions';
 import { deleteAgentMemory, listAgentMemories, type AgentMemory } from './memories';
 import type { Ledger, Product } from './types';
-import { chatOrderId, chatOrderRequest, type ChatOrderView } from './chatOrders';
+import { chatOrderId, chatOrderRequest, type ChatOrderLine, type ChatOrderView } from './chatOrders';
 import { ChatOrderCard } from './ChatOrderCard';
 
 const suggestions = ['Order rice 2 bags tomorrow', 'Repeat my usual order', 'Find my biggest buying opportunity', 'What should I restock this week?'];
 const shortDate = (value: string) => new Date(value).toLocaleDateString('en-SG', { day: 'numeric', month: 'short' });
+type MissingItemContext={orderId:string;lineIndex:number;rawText:string;draft:{lines:ChatOrderLine[];requestedDeliveryOn:string|null;deliveryNote:string}};
 
 export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerChange }: { accountId: string; accountName: string; token: string; ledger: Ledger | null; onLedgerChange: () => Promise<void> }) {
   const [chats, setChats] = useState<Conversation[]>([]);
@@ -25,6 +26,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState('');
   const [proposals, setProposals] = useState<AssistantProposal[]>([]);
+  const [missingItem, setMissingItem] = useState<MissingItemContext|null>(null);
   const [orders, setOrders] = useState<Record<string,ChatOrderView>>({});
   const requestId = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -35,7 +37,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
 
   useEffect(() => {
     const current = ++requestId.current;
-    setChats([]); setMemories([]); setActiveId(null); setMessages([]); setOrders({}); setQuestion(''); setError(''); setProposals([]); setLoading(true); setBusy(false); setPendingQuestion(''); setHistoryOpen(false); requestKeyRef.current=null;
+    setChats([]); setMemories([]); setActiveId(null); setMessages([]); setOrders({}); setQuestion(''); setError(''); setProposals([]); setMissingItem(null); setLoading(true); setBusy(false); setPendingQuestion(''); setHistoryOpen(false); requestKeyRef.current=null;
     listAgentMemories(accountId).then(rows => { if (requestId.current === current) setMemories(rows); }).catch(cause => { if (requestId.current === current) setError(cause instanceof Error ? cause.message : 'Could not load outlet memory.'); });
     listConversations(accountId).then(async result => {
       if (requestId.current !== current) return;
@@ -73,11 +75,11 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
     } catch (cause) { if (requestId.current===current) setError(cause instanceof Error?cause.message:'Could not load order cards.'); }
   };
 
-  const newChat = () => { requestId.current++; requestKeyRef.current=null; setActiveId(null); setMessages([]); setQuestion(''); setError(''); setProposals([]); setHistoryOpen(false); setLoading(false); setLoadingThread(false); };
+  const newChat = () => { requestId.current++; requestKeyRef.current=null; setActiveId(null); setMessages([]); setQuestion(''); setError(''); setProposals([]); setMissingItem(null); setHistoryOpen(false); setLoading(false); setLoadingThread(false); };
   const openChat = async (chat: Conversation) => {
     if (busy || chat.id === activeId) { setHistoryOpen(false); return; }
     const current = ++requestId.current;
-    setLoadingThread(true); setError(''); setProposals([]); setHistoryOpen(false);
+    setLoadingThread(true); setError(''); setProposals([]); setMissingItem(null); setHistoryOpen(false);
     try {
       const rows = await loadConversation(accountId, chat.id);
       if (requestId.current !== current) return;
@@ -157,6 +159,13 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
     } finally { if (currentAccount.current===accountId) setBusy(false); }
   };
 
+  const addMissingItem = (order:ChatOrderView,lineIndex:number,rawText:string,draft:MissingItemContext['draft']) => {
+    if (busy) return;
+    setMissingItem({orderId:order.id,lineIndex,rawText,draft});
+    const proposal:AssistantProposal={kind:'create_item',itemId:null,supplierId:null,productId:null,name:null,unit:null,baseQuantity:null,baseUnit:null,active:null,category:null,grade:null,aliases:[],date:null,quantity:null,price:null,usageKind:null,leadDays:null,claimId:null,claimStatus:null,deliveryLines:[],market:null,sourceName:null,sourceUrl:null,note:null};
+    setProposals(previous=>[proposal,...previous]);
+  };
+
   const confirmAction = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const proposal = proposals[0];
@@ -164,7 +173,12 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
     const fields = new FormData(event.currentTarget);
     setBusy(true); setError('');
     let result = '';
-    try { result = await applyAssistantProposal(accountId, proposal, fields, ledger); }
+    let createdItemId:string|undefined;
+    try {
+      const applied=await applyAssistantProposal(accountId, proposal, fields, ledger);
+      result=typeof applied==='string'?applied:applied.message;
+      createdItemId=typeof applied==='string'?undefined:applied.createdItemId;
+    }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save that change.'); setBusy(false); return; }
     if (currentAccount.current !== accountId) return;
     try { await onLedgerChange(); }
@@ -172,6 +186,20 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
     if (proposal.kind === 'remember_fact') {
       try { setMemories(await listAgentMemories(accountId)); }
       catch { setError(`${result} Reload the page to refresh saved memories.`); }
+    }
+    if (createdItemId && missingItem) {
+      const order=orders[missingItem.orderId];
+      if (order?.status==='awaiting_review') {
+        try {
+          const lines=missingItem.draft.lines.map((line,index)=>index===missingItem.lineIndex?{...line,itemId:createdItemId,rawUnit:String(fields.get('unit') || ''),ambiguous:false}:line);
+          const updated=await chatOrderRequest<{order:ChatOrderView}>(token,{accountId,action:'revise',orderId:order.id,version:order.version,lines,requestedDeliveryOn:missingItem.draft.requestedDeliveryOn,deliveryNote:missingItem.draft.deliveryNote});
+          setOrders(previous=>({...previous,[order.id]:updated.order}));
+          result+=' It is now in the order draft. Review its quantity and delivery date before confirming.';
+        } catch (cause) {
+          setError(`Item saved, but the order draft could not be updated: ${cause instanceof Error?cause.message:'open Edit details and select it.'}`);
+        }
+      }
+      setMissingItem(null);
     }
     if (activeId) {
       try { const saved = await saveActionResult(accountId, activeId, result); setMessages(previous => [...previous, saved]); }
@@ -226,12 +254,12 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
         <div className="ask-thread-scroll" ref={scrollRef} aria-live="polite">{loading || loadingThread ? <p className="muted">Loading conversation…</p> : messages.length === 0 && !pendingQuestion ? <div className="ask-start"><span className="chat-mark" aria-hidden="true"><AgentMark /></span><h3>What would you like to do?</h3><p>Send a stock request in your own words. ReStock will split it by supplier and ask you to review it. You can also ask about prices, stock and your ledger.</p><div className="ask-start-suggestions">{suggestions.map(text => <button key={text} disabled={busy} onClick={() => void ask(text)}>{text}<span aria-hidden="true">↗</span></button>)}</div><button className="ask-brief-link" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ Generate morning brief</button></div> : <>{messages.map(entry => {
           const orderId=chatOrderId(entry.evidence);
           const order=orderId ? orders[orderId] : undefined;
-          return <div key={entry.id}><ChatTurn role={entry.role} body={entry.body} evidence={entry.evidence} />{entry.role==='assistant' && orderId && latestOrderMessage.get(orderId)===entry.id && order && <ChatOrderCard order={order} ledger={ledger} busy={busy} onAction={(action,payload,userText)=>actOnOrder(order,action,payload,userText)} />}</div>;
+          return <div key={entry.id}><ChatTurn role={entry.role} body={entry.body} evidence={entry.evidence} />{entry.role==='assistant' && orderId && latestOrderMessage.get(orderId)===entry.id && order && <ChatOrderCard order={order} ledger={ledger} busy={busy} onAction={(action,payload,userText)=>actOnOrder(order,action,payload,userText)} onAddMissingItem={(lineIndex,rawText,draft)=>addMissingItem(order,lineIndex,rawText,draft)} />}</div>;
         })}{pendingQuestion && <><ChatTurn role="user" body={pendingQuestion} /><div className="chat-turn assistant chat-pending" role="status"><span className="chat-turn-avatar" aria-hidden="true"><AgentMark /></span><div className="chat-turn-body"><strong>ReStock assistant</strong><p>{waitingSeconds < 4 ? 'Planning the task…' : waitingSeconds < 20 ? 'Specialists are checking your records…' : 'Reviewing the findings…'}</p></div></div></>}</>}</div>
         <form className="ask-input" onSubmit={(event: FormEvent) => { event.preventDefault(); void ask(question); }}><label className="visually-hidden" htmlFor="ledger-question">Ask ReStock</label><textarea ref={composerRef} id="ledger-question" value={question} onChange={event => setQuestion(event.target.value)} placeholder="Message ReStock assistant…" minLength={2} maxLength={500} required rows={1} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /><div><span>Enter to send · Shift+Enter for a new line</span><button type="submit" disabled={busy || question.trim().length < 2} aria-label="Send question">↑</button></div></form>
       </section>
     </div>
-    {proposals[0] && ledger && <ActionReview key={`${proposals.length}-${proposals[0].kind}-${proposals[0].name || ''}`} proposal={proposals[0]} remaining={proposals.length} ledger={ledger} busy={busy} onConfirm={confirmAction} onCancel={() => setProposals(previous => previous.slice(1))} />}
+    {proposals[0] && ledger && <ActionReview key={`${proposals.length}-${proposals[0].kind}-${proposals[0].name || ''}`} proposal={proposals[0]} remaining={proposals.length} ledger={ledger} busy={busy} missingItemText={missingItem?.rawText} onConfirm={confirmAction} onCancel={() => {setProposals(previous => previous.slice(1));setMissingItem(null);}} />}
   </div>;
 }
 
@@ -252,7 +280,7 @@ function ChatTurn({ role, body, evidence = [] }: { role: 'user' | 'assistant'; b
   </div>;
 }
 
-function ActionReview({ proposal, remaining, ledger, busy, onConfirm, onCancel }: { proposal: AssistantProposal; remaining: number; ledger: Ledger; busy: boolean; onConfirm: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void }) {
+function ActionReview({ proposal, remaining, ledger, busy, missingItemText, onConfirm, onCancel }: { proposal: AssistantProposal; remaining: number; ledger: Ledger; busy: boolean; missingItemText?:string; onConfirm: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [supplierId, setSupplierId] = useState(proposal.supplierId || (proposal.kind === 'create_item' && !ledger.suppliers.length ? '__new' : ''));
   const [productId, setProductId] = useState(proposal.productId || (ledger.products.length ? '' : '__new'));
@@ -268,7 +296,7 @@ function ActionReview({ proposal, remaining, ledger, busy, onConfirm, onCancel }
   return <dialog ref={dialogRef} className="ask-action-card" aria-labelledby="ask-action-title" onCancel={event => { event.preventDefault(); if (!busy) onCancel(); }}>
     <div className="ask-action-heading"><span className="ai-spark small" aria-hidden="true"><AgentMark /></span><div><small>REVIEW BEFORE SAVING{remaining > 1 ? ` · ${remaining} CHANGES LEFT` : ''}</small><h3 id="ask-action-title">{titles[proposal.kind]}</h3></div><button type="button" className="ask-action-close" onClick={onCancel} disabled={busy} aria-label="Close review">×</button></div>
     <form onSubmit={onConfirm}>
-      <div className="ask-action-fields"><p className="ask-action-intro">Complete the details below. Nothing changes in your ledger until you save.</p>
+      <div className="ask-action-fields"><p className="ask-action-intro">{missingItemText ? `Not found in your catalog: “${missingItemText}”. Add the exact supplier pack below. The order will still need your review.` : 'Complete the details below. Nothing changes in your ledger until you save.'}</p>
       {proposal.kind === 'create_supplier' && <label>Supplier name<input name="name" defaultValue={proposal.name || ''} minLength={2} maxLength={160} required /></label>}
       {proposal.kind === 'create_product' && <><label>Product name<input name="name" defaultValue={proposal.name || ''} minLength={2} maxLength={160} required /></label><label>Comparison unit<select name="baseUnit" defaultValue={proposal.baseUnit || ''} required><option value="">Choose a unit</option><option value="kg">kg</option><option value="l">litre</option><option value="each">each</option></select></label><label>Category<input name="category" defaultValue={proposal.category || ''} maxLength={80} /></label><label>Grade or specification<input name="grade" defaultValue={proposal.grade || ''} maxLength={80} /></label></>}
       {proposal.kind === 'record_quote' && <><label>Supplier item<select name="itemId" defaultValue={proposal.itemId || ''} required><option value="">Choose an item</option>{ledger.items.filter(row => row.active).map(row => <option key={row.id} value={row.id}>{row.name} · {ledger.suppliers.find(supplier => supplier.id === row.supplier_id)?.name}</option>)}</select></label><div className="ask-action-pair"><label>Quoted date<input name="date" type="date" defaultValue={proposal.date || today} required /></label><label>Price per pack (SGD)<input name="price" type="number" min="0.01" step="0.01" defaultValue={proposal.price ?? ''} required /></label></div></>}

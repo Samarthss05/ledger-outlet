@@ -3,9 +3,10 @@ import type { Ledger } from './types';
 import type { ChatOrderLine, ChatOrderView } from './chatOrders';
 
 type Action = 'revise'|'confirm'|'cancel'|'supplier_reply'|'review_reply'|'receive';
-type Props = {order:ChatOrderView;ledger:Ledger|null;busy:boolean;onAction:(action:Action,payload:Record<string,unknown>,userText?:string)=>Promise<boolean>};
+type AddItemDraft={lines:ChatOrderLine[];requestedDeliveryOn:string|null;deliveryNote:string};
+type Props = {order:ChatOrderView;ledger:Ledger|null;busy:boolean;onAction:(action:Action,payload:Record<string,unknown>,userText?:string)=>Promise<boolean>;onAddMissingItem:(lineIndex:number,rawText:string,draft:AddItemDraft)=>void};
 
-export function ChatOrderCard({order,ledger,busy,onAction}:Props) {
+export function ChatOrderCard({order,ledger,busy,onAction,onAddMissingItem}:Props) {
   const [editing,setEditing]=useState(false);
   const [lines,setLines]=useState<ChatOrderLine[]>(order.lines);
   const [deliveryDate,setDeliveryDate]=useState(order.requested_delivery_on || '');
@@ -14,6 +15,8 @@ export function ChatOrderCard({order,ledger,busy,onAction}:Props) {
   const [replyStatus,setReplyStatus]=useState<Record<string,string>>({});
   useEffect(()=>{setLines(order.lines);setDeliveryDate(order.requested_delivery_on || '');setDeliveryNote(order.delivery_note);setEditing(false);},[order.id,order.version]);
   const itemOptions=(ledger?.items || []).filter(item=>item.active);
+  const missingLines=order.lines.map((line,index)=>({line,index})).filter(({line})=>!line.itemId || Boolean(ledger && !itemOptions.some(item=>item.id===line.itemId)));
+  const currentDraft=():AddItemDraft=>({lines,requestedDeliveryOn:deliveryDate || null,deliveryNote});
   const revise=(event:FormEvent)=>{event.preventDefault();void onAction('revise',{lines:lines.map(line=>({...line,itemId:line.itemId || null,quantity:line.quantity || null,rawUnit:line.rawUnit || null})),requestedDeliveryOn:deliveryDate || null,deliveryNote});};
   const status=order.status.replaceAll('_',' ');
   return <article className="chat-order-card" aria-label="Chat order review">
@@ -24,7 +27,7 @@ export function ChatOrderCard({order,ledger,busy,onAction}:Props) {
       <label>Delivery window or note<input value={deliveryNote} maxLength={160} onChange={event=>setDeliveryNote(event.target.value)} placeholder="Before 9am" /></label>
       <div className="chat-order-line-list">{lines.map((line,index)=>{
         const selected=itemOptions.find(item=>item.id===line.itemId);
-        return <div className="chat-order-edit-line" key={index}><small>Message said: {line.rawText}</small><label>Exact item<select value={line.itemId || ''} onChange={event=>setLines(previous=>previous.map((row,i)=>i===index?{...row,itemId:event.target.value || null}:row))} required><option value="">Choose from this outlet</option>{itemOptions.map(item=><option key={item.id} value={item.id}>{item.name} · {ledger?.suppliers.find(supplier=>supplier.id===item.supplier_id)?.name} · {item.unit}</option>)}</select></label><label>Quantity<input type="number" min="0.001" max="10000" step="0.001" value={line.quantity ?? ''} onChange={event=>setLines(previous=>previous.map((row,i)=>i===index?{...row,quantity:event.target.value?Number(event.target.value):null}:row))} required /></label><span>Pack unit: {selected?.unit || 'Select an item'}</span>{lines.length>1 && <button type="button" onClick={()=>setLines(previous=>previous.filter((_,i)=>i!==index))}>Remove line</button>}</div>;
+        return <div className="chat-order-edit-line" key={index}><small>Message said: {line.rawText}</small><label>Exact item<select value={line.itemId || ''} onChange={event=>setLines(previous=>previous.map((row,i)=>i===index?{...row,itemId:event.target.value || null}:row))} required><option value="">Choose from this outlet</option>{itemOptions.map(item=><option key={item.id} value={item.id}>{item.name} · {ledger?.suppliers.find(supplier=>supplier.id===item.supplier_id)?.name} · {item.unit}</option>)}</select></label><label>Quantity<input type="number" min="0.001" max="10000" step="0.001" value={line.quantity ?? ''} onChange={event=>setLines(previous=>previous.map((row,i)=>i===index?{...row,quantity:event.target.value?Number(event.target.value):null}:row))} required /></label><span>Pack unit: {selected?.unit || 'Select an item'}</span>{!selected && <button type="button" className="chat-order-add-missing" disabled={busy} onClick={()=>onAddMissingItem(index,line.rawText,currentDraft())}>＋ Add this item to catalog</button>}{lines.length>1 && <button type="button" onClick={()=>setLines(previous=>previous.filter((_,i)=>i!==index))}>Remove line</button>}</div>;
       })}</div>
       <button type="button" className="chat-order-link" onClick={()=>setLines(previous=>[...previous,{itemId:null,quantity:null,rawUnit:null,rawText:'Added in review',ambiguous:true}])}>＋ Add item</button>
       <div className="chat-order-controls"><button type="button" onClick={()=>setEditing(false)} disabled={busy}>Back</button><button type="submit" className="primary" disabled={busy}>Save new version</button></div>
@@ -32,6 +35,7 @@ export function ChatOrderCard({order,ledger,busy,onAction}:Props) {
       <div className="chat-order-date">{order.preview.requestedDeliveryOn ? `Delivery: ${order.preview.requestedDeliveryOn}${order.preview.deliveryNote?' · '+order.preview.deliveryNote:''}` : 'Choose a delivery date before confirming'}</div>
       {order.preview.groups.map(group=><section className="chat-order-group" key={group.supplierId}><strong>{group.supplierName}</strong><ul>{group.lines.map((line,index)=><li key={`${line.itemId}-${index}`}><span>{line.itemName}</span><b>×{line.quantity} {line.unit}</b></li>)}</ul></section>)}
       {order.preview.issues.length>0 && order.status==='awaiting_review' && <div className="chat-order-issues"><strong>Needs your attention</strong><ul>{order.preview.issues.map((issue,index)=><li key={index}>{issue}</li>)}</ul></div>}
+      {order.status==='awaiting_review' && missingLines.length>0 && <div className="chat-order-missing"><strong>Not in this outlet’s catalog</strong><p>Add the supplier item and its pack details, then review the order again.</p>{missingLines.map(({line,index})=><div className="chat-order-missing-row" key={index}><span>{line.rawText}</span><button type="button" disabled={busy} onClick={()=>onAddMissingItem(index,line.rawText,{lines:order.lines,requestedDeliveryOn:order.requested_delivery_on,deliveryNote:order.delivery_note})}>＋ Add item</button></div>)}</div>}
       {order.status==='awaiting_review' && <div className="chat-order-controls"><button type="button" disabled={busy} onClick={()=>void onAction('cancel',{})}>Cancel draft</button><button type="button" disabled={busy} onClick={()=>setEditing(true)}>Edit details</button><button type="button" className="primary" disabled={busy || !order.preview.ready} onClick={()=>void onAction('confirm',{})}>Confirm order</button></div>}
     </>}
     {order.status==='confirmed' && <div className="chat-order-suppliers"><h5>Supplier conversation simulator</h5><p>These messages are prepared from your confirmed order. Paste a supplier reply to test how the agent would read it.</p>

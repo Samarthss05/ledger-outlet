@@ -92,8 +92,8 @@ async function classify(text:string) {
 function summary(order:ChatOrderView) {
   const count = order.preview.groups.reduce((n,g) => n+g.lines.length,0);
   if (order.status === 'awaiting_review') return count
-    ? `I found ${count} item${count===1?'':'s'} across ${order.preview.groups.length} supplier${order.preview.groups.length===1?'':'s'}. ${order.preview.issues.length ? 'Some details need correction. ' : ''}Review the order card and select Confirm order. Nothing has gone to a supplier.`
-    : 'I could not confidently match the order. Choose the exact outlet items and quantities in the review card.';
+    ? `I found ${count} item${count===1?'':'s'} across ${order.preview.groups.length} supplier${order.preview.groups.length===1?'':'s'}. ${order.preview.issues.length ? 'Some details need correction; use Add item for anything missing from your catalog. ' : ''}Review the order card and select Confirm order. Nothing has gone to a supplier.`
+    : 'I could not confidently match the order. Choose an existing outlet item or use Add item in the review card, then check its quantity and delivery date.';
   if (order.status === 'confirmed') return 'Order confirmed in this chat. Supplier messages are staged here for the pilot; no WhatsApp message has been sent.';
   if (order.status === 'received') return 'Arrival recorded in this chat. Enter delivered quantities and prices in the delivery ledger to complete the financial record.';
   if (order.status === 'cancel_requested') return 'Cancellation requested in this chat. Check with the supplier before treating an accepted order as cancelled.';

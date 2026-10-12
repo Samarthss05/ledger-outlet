@@ -74,7 +74,8 @@ export async function createProduct(accountId: string, value: { name: string; ca
   return data as Product;
 }
 export async function createItem(accountId: string, value: { supplier_id: string; product_id: string; base_quantity: number | null; name: string; unit: string; aliases: string[]; order_unit_aliases?: string[] }) {
-  const { error } = await needClient().from('ledger_items').insert({ account_id: accountId, ...value }); fail(error);
+  const { data, error } = await needClient().from('ledger_items').insert({ account_id: accountId, ...value }).select('*').single(); fail(error);
+  return data as Item;
 }
 export async function updateItem(accountId: string, itemId: string, value: { product_id: string; base_quantity: number; name: string; unit: string; aliases: string[]; order_unit_aliases?: string[] }) {
   const { error } = await needClient().from('ledger_items').update(value).eq('account_id', accountId).eq('id', itemId).select('id').single(); fail(error);

@@ -148,6 +148,6 @@ export async function applyAssistantProposal(accountId: string, proposal: Assist
     productId = product.id;
   }
   if (!supplierId || !productId) throw new Error('Choose or create a supplier and product.');
-  await createItem(accountId, { supplier_id: supplierId, product_id: productId, name, unit, base_quantity: baseQuantity, aliases });
-  return `Added ${name} to the item catalog.`;
+  const created = await createItem(accountId, { supplier_id: supplierId, product_id: productId, name, unit, base_quantity: baseQuantity, aliases });
+  return { message: `Added ${name} to the item catalog.`, createdItemId: created.id };
 }

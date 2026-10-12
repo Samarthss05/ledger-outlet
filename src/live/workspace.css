@@ -518,6 +518,12 @@
 .chat-order-group li b { color:var(--ink); white-space:nowrap; }
 .chat-order-issues { margin:12px 0; padding:12px; border:1px solid var(--ws-line); border-radius:10px; background:var(--ws-soft); color:var(--ink-2); }
 .chat-order-issues li { margin-top:5px; line-height:1.4; }
+.chat-order-missing { display:grid; gap:8px; margin:12px 0; padding:12px; border:1px solid var(--ws-line); border-radius:10px; background:var(--ws-soft); }
+.chat-order-missing>strong { color:var(--ink); font-size:12px; }
+.chat-order-missing>p { margin:0; color:var(--ws-muted); font-size:11px; line-height:1.45; }
+.chat-order-missing-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 0; border-top:1px solid var(--ws-line); }
+.chat-order-missing-row>span { color:var(--ink-2); overflow-wrap:anywhere; min-width:0; }
+.chat-order-missing-row>button,.chat-order-add-missing { min-height:34px; padding:5px 9px; border:1px solid var(--green); border-radius:8px; color:var(--green); font-size:11px; font-weight:750; white-space:nowrap; }
 .chat-order-controls { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; margin-top:14px; }
 .chat-order-controls button,.chat-order-supplier-thread form button,.chat-order-reply-review button { min-height:36px; padding:0 12px; border:1px solid var(--ws-line); border-radius:9px; color:var(--ink-2); font-size:11px; font-weight:750; }
 .chat-order-controls button.primary { background:var(--brand-green); border-color:var(--brand-green); color:#fff; }
@@ -586,6 +592,7 @@
   .chat-order-card { width:100%; margin:0 0 18px; padding:13px; }
   .chat-order-edit-line { grid-template-columns:1fr; }
   .chat-order-edit-line>small,.chat-order-edit-line>span { grid-column:1; }
+  .chat-order-missing-row { align-items:flex-start; flex-direction:column; }
   .chat-order-supplier-thread form,.chat-order-reply-review { flex-direction:column; }
   .market-focus-strip { align-items:flex-start; flex-wrap:wrap; gap:10px; padding:15px; }
   .market-focus-strip h3 { font-size:16px; }
