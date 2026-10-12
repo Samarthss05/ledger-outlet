@@ -112,6 +112,9 @@ export async function handleLiveAi(body:unknown, authorization:string|undefined)
     return {message:result.text,evidence:[`${facts.item}: ${facts.firstPrice} → ${facts.latestPrice} per ${facts.unit}`]};
   }
   if (!input.question) throw new AiError('Enter a question.',400);
+  if (/\b(?:bulk\s+add|import|upload)\b.{0,55}\b(?:items?|catalog(?:ue)?|products?)\b/i.test(input.question)) {
+    return {answer:'I can help build the catalog, but I need the actual item list. Paste a few rows with item name, supplier, pack unit and pack size; I will prepare each change for review. For a large list, send it in batches of five items. Nothing has been added yet.',evidence:[]};
+  }
   const simpleItemRequest = input.question.match(/^\s*(?:please\s+)?(?:(?:(?:can|could|would|will)\s+you|i\s+(?:(?:want|need)\s+(?:you\s+)?to|(?:would|'d)\s+like\s+to))\s+(?:please\s+)?)?(?:add|create)\s+(.+?)\s+as\s+(?:an?\s+)?(?:new\s+)?item[.!?]?\s*$/i);
   // Short commands such as “Add coke” mean a new catalog item in this workspace.
   // Do not treat quantities, stock movements, or supplier/price instructions this way.

@@ -108,7 +108,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
     setBusy(true); setPendingQuestion(prompt); setError('');
     let answer = ''; let evidence: string[] = []; let nextId = activeId; let nextProposals: AssistantProposal[] = []; let nextOrder:ChatOrderView|undefined;
     try {
-      const currentOrderId=[...messages].reverse().map(message=>chatOrderId(message.evidence)).find(id=>id && orders[id]?.status==='awaiting_review');
+      const currentOrderId=[...messages].reverse().map(message=>chatOrderId(message.evidence)).find((id):id is string=>Boolean(id));
       const response = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action, accountId, ...(action === 'ask' ? { question: prompt, requestId, ...(currentOrderId ? { currentOrderId } : {}), ...(activeId ? { conversationId: activeId } : {}) } : {}) }) });
       const result = await response.json() as { answer?: string; brief?: string; evidence?: string[]; order?:ChatOrderView; proposals?: AssistantProposal[]; proposal?: AssistantProposal; error?: string };
       if (!response.ok) throw new Error(result.error || 'Could not answer that question.');
