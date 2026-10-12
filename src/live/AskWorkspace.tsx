@@ -30,6 +30,7 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
   const [orders, setOrders] = useState<Record<string,ChatOrderView>>({});
   const requestId = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const requestKeyRef = useRef<{text:string;id:string}|null>(null);
   const currentAccount = useRef(accountId);
@@ -52,7 +53,16 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
     return () => { requestId.current++; };
   }, [accountId]);
 
-  useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, [messages.length, pendingQuestion]);
+  useEffect(() => {
+    const frame=window.requestAnimationFrame(()=>{
+      const scroller=scrollRef.current;
+      if (!scroller) return;
+      if (pendingQuestion) {scroller.scrollTo({top:scroller.scrollHeight,behavior:'smooth'});return;}
+      const target=lastMessageRef.current;
+      if (target) scroller.scrollTo({top:scroller.scrollTop+target.getBoundingClientRect().top-scroller.getBoundingClientRect().top-12,behavior:'smooth'});
+    });
+    return ()=>window.cancelAnimationFrame(frame);
+  }, [messages.length,pendingQuestion]);
   useEffect(() => {
     if (!busy || !pendingQuestion) { setWaitingSeconds(0); return; }
     const started=Date.now();
@@ -98,7 +108,8 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
     setBusy(true); setPendingQuestion(prompt); setError('');
     let answer = ''; let evidence: string[] = []; let nextId = activeId; let nextProposals: AssistantProposal[] = []; let nextOrder:ChatOrderView|undefined;
     try {
-      const response = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action, accountId, ...(action === 'ask' ? { question: prompt, requestId, ...(activeId ? { conversationId: activeId } : {}) } : {}) }) });
+      const currentOrderId=[...messages].reverse().map(message=>chatOrderId(message.evidence)).find(id=>id && orders[id]?.status==='awaiting_review');
+      const response = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action, accountId, ...(action === 'ask' ? { question: prompt, requestId, ...(currentOrderId ? { currentOrderId } : {}), ...(activeId ? { conversationId: activeId } : {}) } : {}) }) });
       const result = await response.json() as { answer?: string; brief?: string; evidence?: string[]; order?:ChatOrderView; proposals?: AssistantProposal[]; proposal?: AssistantProposal; error?: string };
       if (!response.ok) throw new Error(result.error || 'Could not answer that question.');
       if (currentAccount.current !== accountId) return;
@@ -251,10 +262,10 @@ export function AskWorkspace({ accountId, accountName, token, ledger, onLedgerCh
         <details className="ask-memory"><summary>Outlet memory <span>{memories.length}</span></summary><p>Tell ReStock “remember that…” to add a fact for future chats.</p>{memories.length ? <ul>{memories.map(memory => <li key={memory.id}><span>{memory.content}</span><button type="button" onClick={() => void forgetMemory(memory)} aria-label={`Forget ${memory.content}`}>Forget</button></li>)}</ul> : <p>No saved memories yet.</p>}</details>
       </aside>
       <section className="ask-chat-main" aria-label="ReStock conversation"><div className="ask-thread-top"><div><span className="ai-spark small" aria-hidden="true"><AgentMark /></span><div><strong>ReStock assistant</strong><small>{accountName} · {active ? 'Saved conversation' : 'New conversation'}</small></div></div><div className="ask-thread-actions">{messages.length > 0 && <button type="button" className="ask-brief-shortcut" title="Generate morning brief" aria-label="Generate morning brief" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ <span>Morning brief</span></button>}</div></div>
-        <div className="ask-thread-scroll" ref={scrollRef} aria-live="polite">{loading || loadingThread ? <p className="muted">Loading conversation…</p> : messages.length === 0 && !pendingQuestion ? <div className="ask-start"><span className="chat-mark" aria-hidden="true"><AgentMark /></span><h3>What would you like to do?</h3><p>Send a stock request in your own words. ReStock will split it by supplier and ask you to review it. You can also ask about prices, stock and your ledger.</p><div className="ask-start-suggestions">{suggestions.map(text => <button key={text} disabled={busy} onClick={() => void ask(text)}>{text}<span aria-hidden="true">↗</span></button>)}</div><button className="ask-brief-link" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ Generate morning brief</button></div> : <>{messages.map(entry => {
+        <div className="ask-thread-scroll" ref={scrollRef} aria-live="polite">{loading || loadingThread ? <p className="muted">Loading conversation…</p> : messages.length === 0 && !pendingQuestion ? <div className="ask-start"><span className="chat-mark" aria-hidden="true"><AgentMark /></span><h3>What would you like to do?</h3><p>Send a stock request in your own words. ReStock will split it by supplier and ask you to review it. You can also ask about prices, stock and your ledger.</p><div className="ask-start-suggestions">{suggestions.map(text => <button key={text} disabled={busy} onClick={() => void ask(text)}>{text}<span aria-hidden="true">↗</span></button>)}</div><button className="ask-brief-link" disabled={busy} onClick={() => void ask('Generate my morning brief', 'brief')}>✦ Generate morning brief</button></div> : <>{messages.map((entry,index) => {
           const orderId=chatOrderId(entry.evidence);
           const order=orderId ? orders[orderId] : undefined;
-          return <div key={entry.id}><ChatTurn role={entry.role} body={entry.body} evidence={entry.evidence} />{entry.role==='assistant' && orderId && latestOrderMessage.get(orderId)===entry.id && order && <ChatOrderCard order={order} ledger={ledger} busy={busy} onAction={(action,payload,userText)=>actOnOrder(order,action,payload,userText)} onAddMissingItem={(lineIndex,rawText,draft)=>addMissingItem(order,lineIndex,rawText,draft)} />}</div>;
+          return <div key={entry.id} ref={index===messages.length-1?lastMessageRef:undefined}><ChatTurn role={entry.role} body={entry.body} evidence={entry.evidence} />{entry.role==='assistant' && orderId && latestOrderMessage.get(orderId)===entry.id && order && <ChatOrderCard order={order} ledger={ledger} busy={busy} onAction={(action,payload,userText)=>actOnOrder(order,action,payload,userText)} onAddMissingItem={(lineIndex,rawText,draft)=>addMissingItem(order,lineIndex,rawText,draft)} />}</div>;
         })}{pendingQuestion && <><ChatTurn role="user" body={pendingQuestion} /><div className="chat-turn assistant chat-pending" role="status"><span className="chat-turn-avatar" aria-hidden="true"><AgentMark /></span><div className="chat-turn-body"><strong>ReStock assistant</strong><p>{waitingSeconds < 4 ? 'Planning the task…' : waitingSeconds < 20 ? 'Specialists are checking your records…' : 'Reviewing the findings…'}</p></div></div></>}</>}</div>
         <form className="ask-input" onSubmit={(event: FormEvent) => { event.preventDefault(); void ask(question); }}><label className="visually-hidden" htmlFor="ledger-question">Ask ReStock</label><textarea ref={composerRef} id="ledger-question" value={question} onChange={event => setQuestion(event.target.value)} placeholder="Message ReStock assistant…" minLength={2} maxLength={500} required rows={1} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /><div><span>Enter to send · Shift+Enter for a new line</span><button type="submit" disabled={busy || question.trim().length < 2} aria-label="Send question">↑</button></div></form>
       </section>

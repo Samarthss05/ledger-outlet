@@ -516,6 +516,10 @@
 .chat-order-group ul,.chat-order-issues ul { list-style:none; margin:8px 0 0; padding:0; }
 .chat-order-group li { display:flex; justify-content:space-between; gap:10px; margin-top:5px; color:var(--ink-2); }
 .chat-order-group li b { color:var(--ink); white-space:nowrap; }
+.chat-order-incomplete { display:grid; gap:8px; margin:10px 0; padding:12px; border:1px solid var(--ws-line); border-radius:10px; background:var(--ws-soft); }
+.chat-order-incomplete>strong { color:var(--ink); font-size:12px; }
+.chat-order-incomplete>div { display:flex; justify-content:space-between; gap:12px; color:var(--ink-2); }
+.chat-order-incomplete b { color:var(--green); white-space:nowrap; }
 .chat-order-issues { margin:12px 0; padding:12px; border:1px solid var(--ws-line); border-radius:10px; background:var(--ws-soft); color:var(--ink-2); }
 .chat-order-issues li { margin-top:5px; line-height:1.4; }
 .chat-order-missing { display:grid; gap:8px; margin:12px 0; padding:12px; border:1px solid var(--ws-line); border-radius:10px; background:var(--ws-soft); }
@@ -593,6 +597,7 @@
   .chat-order-edit-line { grid-template-columns:1fr; }
   .chat-order-edit-line>small,.chat-order-edit-line>span { grid-column:1; }
   .chat-order-missing-row { align-items:flex-start; flex-direction:column; }
+  .chat-order-incomplete>div { align-items:flex-start; flex-direction:column; gap:3px; }
   .chat-order-supplier-thread form,.chat-order-reply-review { flex-direction:column; }
   .market-focus-strip { align-items:flex-start; flex-wrap:wrap; gap:10px; padding:15px; }
   .market-focus-strip h3 { font-size:16px; }

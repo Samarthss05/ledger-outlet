@@ -10,6 +10,7 @@ const requestSchema = z.object({
   question: z.string().trim().min(2).max(500).optional(), text: z.string().trim().min(3).max(2000).optional(), itemId: z.string().uuid().optional(),
   conversationId: z.string().uuid().optional(),
   requestId: z.string().uuid().optional(),
+  currentOrderId: z.string().uuid().optional(),
   imageDataUrl: z.string().max(2_800_000).optional()
 });
 const deliveryLinePlan = z.object({itemId:z.string().nullable(),quantityOrdered:z.number().nullable(),quantityDelivered:z.number().nullable(),quantityCharged:z.number().nullable(),unitPrice:z.number().nullable()});
@@ -129,7 +130,7 @@ export async function handleLiveAi(body:unknown, authorization:string|undefined)
     previousTurns = rows.reverse().map((row:{role:string;body:string}) => ({role:row.role,body:row.body.slice(0,600)}));
   }
   if (!simpleItemName && !rememberedText) {
-    const routed = await routeChatMessage(db,input.accountId,input.question,input.requestId);
+    const routed = await routeChatMessage(db,input.accountId,input.question,input.requestId,input.currentOrderId);
     if (routed) return routed;
   }
   const agent = simpleItemName || rememberedText ? {prepareChange:true,answer:simpleItemName ? 'I can add that item after you review its supplier and pack details.' : 'I can remember that for this outlet after you review it.',evidence:[]} :

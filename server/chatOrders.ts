@@ -11,7 +11,7 @@ export type ChatOrder = {
   id: string; account_id: string; request_id: string; raw_text: string; source_kind: 'message' | 'usual' | 'repeat';
   requested_delivery_on: string | null; delivery_note: string; lines: ExtractedOrder['lines']; issues: string[];
   supplier_updates: Record<string, SupplierUpdate>; status: ChatStatus; version: number;
-  confirmed_at: string | null; created_at: string; updated_at: string;
+  confirmed_at: string | null; last_followup_request_id: string | null; created_at: string; updated_at: string;
 };
 export type ChatOrderView = ChatOrder & { preview: OrderPreview; supplierMessages: { supplierId: string; supplierName: string; text: string }[] };
 
@@ -29,6 +29,25 @@ const checked = <T>(result: { data: T; error: { message: string } | null }): T =
   return result.data;
 };
 const parseOrder = (value: unknown) => value as ChatOrder;
+const sgDate = (date:Date) => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Singapore',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
+const explicitDate = (text:string) => /\b(?:today|tomorrow|tmr|next|mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?|esok|hari ini|20\d{2}-\d{2}-\d{2}|\d{1,2}[/-]\d{1,2})\b|明天|今天|நாளை/i.test(text);
+const explicitQuantity = (text:string,value:number) => {
+  if (!Number.isFinite(value)) return false;
+  const numbers=[...text.matchAll(/\d+(?:\.\d+)?/g)].map(match=>Number(match[0]));
+  return numbers.some(number=>number===value);
+};
+
+function draftQuestion(order:ChatOrderView,items:OrderItem[]) {
+  const prompts:string[]=[];
+  for (const line of order.lines.slice(0,3)) {
+    const item=items.find(candidate=>candidate.id===line.itemId && candidate.active);
+    if (!item) {prompts.push(`Which outlet item did you mean by “${line.rawText}”? You can choose one or use Add item in the review card.`);continue;}
+    if (line.quantity == null) prompts.push(`I found ${item.name}. How many ${item.unit} do you want?`);
+    else if (!line.rawUnit) prompts.push(`For ${item.name}, is the pack unit ${item.unit}?`);
+  }
+  if (!order.requested_delivery_on) prompts.push('When should it arrive?');
+  return prompts.length ? `${prompts.join(' ')} Reply here with the missing details, or edit the card. Nothing has gone to a supplier.` : null;
+}
 
 export function buildUsualLines(insights:RestockInsight[],items:OrderItem[]):ExtractedOrder['lines'] {
   const lines:ExtractedOrder['lines']=[];
@@ -73,6 +92,37 @@ async function getOrder(db: Db, accountId: string, orderId: string) {
   return parseOrder(row);
 }
 
+const followupShape=z.object({isFollowup:z.boolean(),lineIndex:z.number().int().min(0).max(29).nullable(),quantity:z.number().finite().nullable(),rawUnit:z.string().max(30).nullable(),requestedDeliveryOn:z.string().nullable(),confidence:z.number().min(0).max(1)});
+const followupJson={type:'object',additionalProperties:false,required:['isFollowup','lineIndex','quantity','rawUnit','requestedDeliveryOn','confidence'],properties:{isFollowup:{type:'boolean'},lineIndex:{type:['integer','null']},quantity:{type:['number','null']},rawUnit:{type:['string','null']},requestedDeliveryOn:{type:['string','null']},confidence:{type:'number'}}};
+
+async function tryOrderFollowup(db:Db,accountId:string,text:string,orderId:string,requestId?:string) {
+  const order=await getOrder(db,accountId,orderId);
+  if (order.status!=='awaiting_review') return null;
+  const ctx=await context(db,accountId);
+  const existing=viewOrder(order,ctx);
+  if (requestId && order.last_followup_request_id===requestId) return {answer:draftQuestion(existing,ctx.items) || summary(existing),order:existing,evidence:[`Chat order · ${order.id}`]};
+  const parsed=await openAiJson('restock_order_followup_v1',followupShape,followupJson,
+    `Decide whether the owner's new message supplies missing quantity, pack unit or delivery date for the pending order. Current Singapore date: ${sgDate(new Date())}. A message about another item or another topic is NOT a follow-up. Do not invent quantity, unit or date. Quantity and rawUnit must be explicitly spoken in the new message; a date may resolve words such as tomorrow or tmr. For a single pending line use index 0. For multiple lines, require an explicit item reference in the new message. Return only the schema.`,
+    JSON.stringify({message:text,pendingLines:order.lines.map((line,index)=>({index,rawText:line.rawText,item:ctx.items.find(item=>item.id===line.itemId)?.name || null,unit:ctx.items.find(item=>item.id===line.itemId)?.unit || null,quantity:line.quantity})),currentDeliveryDate:order.requested_delivery_on}),450);
+  if (!parsed.isFollowup || parsed.confidence<.7) return null;
+  const index=parsed.lineIndex ?? (order.lines.length===1 ? 0 : -1);
+  if (index>=order.lines.length || (index<0 && (parsed.quantity!=null || parsed.rawUnit))) return {answer:'Which item are you updating? Name it and give the quantity and pack unit.',order:existing,evidence:[`Chat order · ${order.id}`]};
+  const quantity=parsed.quantity != null && parsed.quantity>0 && parsed.quantity<=10000 && explicitQuantity(text,parsed.quantity) ? parsed.quantity : null;
+  const unit=parsed.rawUnit && text.toLocaleLowerCase().normalize('NFKC').includes(parsed.rawUnit.toLocaleLowerCase().normalize('NFKC')) ? parsed.rawUnit : null;
+  const date=parsed.requestedDeliveryOn && explicitDate(text) ? parsed.requestedDeliveryOn : null;
+  if (quantity===null && !unit && !date) return {answer:draftQuestion(existing,ctx.items) || 'Please give the missing order details.',order:existing,evidence:[`Chat order · ${order.id}`]};
+  const lines=order.lines.map((line,i)=>i===index ? {...line,quantity:quantity ?? line.quantity,rawUnit:unit || line.rawUnit,
+    ambiguous:!line.itemId || !(quantity ?? line.quantity) || !(unit || line.rawUnit)} : line);
+  const candidate={requestedDeliveryOn:date || order.requested_delivery_on,deliveryNote:order.delivery_note,lines,unmatched:[]};
+  const preview=validateOutletOrder(candidate,ctx.items,ctx.suppliers,new Date(),undefined,{channel:'chat'});
+  const updated=checked(await db.from('ledger_chat_orders').update({lines,requested_delivery_on:preview.requestedDeliveryOn,issues:preview.issues,
+    last_followup_request_id:requestId && uuid.safeParse(requestId).success ? requestId : null,version:order.version+1,updated_at:new Date().toISOString()})
+    .eq('account_id',accountId).eq('id',order.id).eq('version',order.version).eq('status','awaiting_review').select('*').maybeSingle());
+  if (!updated) throw new AiError('This order changed. Refresh the review card and try again.',409);
+  const view=viewOrder(parseOrder(updated),ctx);
+  return {answer:draftQuestion(view,ctx.items) || summary(view),order:view,evidence:[`Chat order · ${order.id}`]};
+}
+
 const intents=['ORDER','ORDER_USUAL','ORDER_REPEAT','ORDER_REVIEW','ORDER_CHANGE','ORDER_CANCEL','ORDER_STATUS','DELIVERY_REPORT','LIST_VIEW','MENU','HUMAN','OTHER'] as const;
 const intentShape = z.object({intent:z.enum(intents),confidence:z.number().min(0).max(1)});
 const intentJson = {type:'object',additionalProperties:false,required:['intent','confidence'],properties:{intent:{type:'string',enum:intents},confidence:{type:'number'}}};
@@ -100,7 +150,11 @@ function summary(order:ChatOrderView) {
   return 'Order draft cancelled.';
 }
 
-export async function routeChatMessage(db:Db,accountId:string,text:string,requestId?:string) {
+export async function routeChatMessage(db:Db,accountId:string,text:string,requestId?:string,currentOrderId?:string) {
+  if (currentOrderId && uuid.safeParse(currentOrderId).success) {
+    const continued=await tryOrderFollowup(db,accountId,text,currentOrderId,requestId);
+    if (continued) return continued;
+  }
   const classification=await classify(text);
   if (classification.confidence < .7 && classification.intent !== 'OTHER') return {answer:'I am not sure if that is an order. Please include the exact item, quantity, pack unit and delivery day, or ask a question instead.',evidence:[]};
   const intent=classification.intent;
@@ -129,7 +183,7 @@ export async function routeChatMessage(db:Db,accountId:string,text:string,reques
   if (!ctx.items.some(item=>item.active)) return {answer:'Before ordering, add your regular suppliers and map each item to its supplier in the catalog. Then I can match your message against this outlet’s list.',evidence:[]};
   const id=requestId && uuid.safeParse(requestId).success ? requestId : crypto.randomUUID();
   const existing=checked(await db.from('ledger_chat_orders').select('*').eq('account_id',accountId).eq('request_id',id).maybeSingle());
-  if (existing) {const order=viewOrder(parseOrder(existing),ctx);return {answer:summary(order),order,evidence:[`Chat order · ${order.id}`]};}
+  if (existing) {const order=viewOrder(parseOrder(existing),ctx);return {answer:draftQuestion(order,ctx.items) || summary(order),order,evidence:[`Chat order · ${order.id}`]};}
   let extracted:ExtractedOrder;
   if (intent==='ORDER_REPEAT') {
     const previous=checked(await db.from('ledger_chat_orders').select('lines').eq('account_id',accountId).in('status',['confirmed','received']).order('created_at',{ascending:false}).limit(1).maybeSingle());
@@ -154,7 +208,7 @@ export async function routeChatMessage(db:Db,accountId:string,text:string,reques
     requested_delivery_on:preview.requestedDeliveryOn,delivery_note:preview.deliveryNote,lines,issues:preview.issues}).select('*').single());
   const order=viewOrder(parseOrder(saved),ctx);
   const basis=intent==='ORDER_USUAL'?'This draft uses fresh stock and usage records. Check quantities and choose a delivery date. ':intent==='ORDER_REPEAT'?'This copies the last confirmed order. Check current needs and choose a delivery date. ':'';
-  return {answer:basis+summary(order),order,evidence:[`Chat order · ${order.id}`]};
+  return {answer:basis+(draftQuestion(order,ctx.items) || summary(order)),order,evidence:[`Chat order · ${order.id}`]};
 }
 
 const replyShape=z.object({status:z.enum(['accepted','partial','rejected','unclear']),note:z.string().max(240),confidence:z.number().min(0).max(1)});
