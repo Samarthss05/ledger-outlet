@@ -81,12 +81,54 @@ test('outlet memory is an explicit reviewable action', async () => {
   });
 });
 
+test('clear travel requests are rejected before the planner or specialist agents run', async () => {
+  await withMockedServer(() => { throw new Error('Travel planning must not reach a specialist agent.'); }, async state => {
+    const result = await handleLiveAi({ action: 'ask', accountId, question: 'I want to go Pune' }, 'Bearer preview-session') as { answer: string; evidence: string[]; proposals?: unknown[] };
+    assert.match(result.answer, /outlet’s items, suppliers, orders/);
+    assert.doesNotMatch(result.answer, /trip|travel|Pune|transport/i);
+    assert.deepEqual(result.evidence, []);
+    assert.equal(result.proposals, undefined);
+    assert.deepEqual(state.calls, []);
+    assert.deepEqual(state.writes, []);
+  });
+});
+
+test('off-topic classification wins even if the planner selects a view', async () => {
+  await withMockedServer((_url, body) => {
+    const name = body.response_format.json_schema.name;
+    assert.equal(name, 'ledger_team_plan');
+    assert.match(body.messages[0].content, /Travel planning/);
+    return { choices: [{ message: { content: JSON.stringify({ scope: 'off_topic', views: ['overview'], search: null, from: null, to: null, prepareChange: true }) } }] };
+  }, async state => {
+    const result = await handleLiveAi({ action: 'ask', accountId, question: 'Help me plan my wedding' }, 'Bearer preview-session') as { answer: string; evidence: string[]; proposals?: unknown[] };
+    assert.match(result.answer, /outlet’s items, suppliers, orders/);
+    assert.doesNotMatch(result.answer, /wedding/i);
+    assert.deepEqual(result.evidence, []);
+    assert.equal(result.proposals, undefined);
+    assert.deepEqual(state.calls, ['ledger_team_plan']);
+    assert.deepEqual(state.writes, []);
+  });
+});
+
+test('no ledger views cannot fall through to a general chatbot', async () => {
+  await withMockedServer((_url, body) => {
+    assert.equal(body.response_format.json_schema.name, 'ledger_team_plan');
+    return { choices: [{ message: { content: JSON.stringify({ scope: 'shop', views: [], search: null, from: null, to: null, prepareChange: true }) } }] };
+  }, async state => {
+    const result = await handleLiveAi({ action: 'ask', accountId, question: 'What is the capital of France?' }, 'Bearer preview-session') as { answer: string; proposals?: unknown[] };
+    assert.match(result.answer, /outlet’s items, suppliers, orders/);
+    assert.equal(result.proposals, undefined);
+    assert.deepEqual(state.calls, ['ledger_team_plan']);
+    assert.deepEqual(state.writes, []);
+  });
+});
+
 test('coordinator delegates pricing and stock analysis, then review agent checks the answer', async () => {
   await withMockedServer((_url, body) => {
     const name = body.response_format.json_schema.name;
     if (name === 'ledger_team_plan') {
       assert.match(JSON.stringify(body.messages), /carton of 24/);
-      return { choices: [{ message: { content: JSON.stringify({ views: ['prices', 'stock'], search: 'Coke', from: null, to: null, prepareChange: false }) } }] };
+      return { choices: [{ message: { content: JSON.stringify({ scope: 'shop', views: ['prices', 'stock'], search: 'Coke', from: null, to: null, prepareChange: false }) } }] };
     }
     if (name === 'ledger_specialist_finding') {
       const pricing = body.messages[0].content.includes('Pricing agent');
@@ -110,7 +152,7 @@ test('coordinator delegates pricing and stock analysis, then review agent checks
 test('partial specialist failure is disclosed instead of presenting a complete analysis', async () => {
   await withMockedServer((_url, body) => {
     const name = body.response_format.json_schema.name;
-    if (name === 'ledger_team_plan') return { choices: [{ message: { content: JSON.stringify({ views: ['prices', 'stock'], search: 'Coke', from: null, to: null, prepareChange: false }) } }] };
+    if (name === 'ledger_team_plan') return { choices: [{ message: { content: JSON.stringify({ scope: 'shop', views: ['prices', 'stock'], search: 'Coke', from: null, to: null, prepareChange: false }) } }] };
     if (name === 'ledger_specialist_finding') {
       if (body.messages[0].content.includes('Pricing agent')) return { choices: [{ message: { content: '' } }] };
       return { choices: [{ message: { content: JSON.stringify({ summary: 'Coke has two days of cover.', factIds: ['F2'] }) } }] };
@@ -133,7 +175,7 @@ test('partial specialist failure is disclosed instead of presenting a complete a
 test('agents prepare multiple independent changes and require an independent action review', async () => {
   await withMockedServer((_url, body) => {
     const name = body.response_format.json_schema.name;
-    if (name === 'ledger_team_plan') return { choices: [{ message: { content: JSON.stringify({ views: ['catalog', 'stock'], search: 'Coke', from: null, to: null, prepareChange: false }) } }] };
+    if (name === 'ledger_team_plan') return { choices: [{ message: { content: JSON.stringify({ scope: 'shop', views: ['catalog', 'stock'], search: 'Coke', from: null, to: null, prepareChange: false }) } }] };
     if (name === 'ledger_specialist_finding') return { choices: [{ message: { content: JSON.stringify({ summary: 'The requested record should be reviewed before saving.', factIds: [] }) } }] };
     if (name === 'ledger_team_answer' || name === 'ledger_team_review') return { choices: [{ message: { content: JSON.stringify({ answer: 'I will prepare the catalog and stock changes for review.', factIds: [] }) } }] };
     if (name === 'ledger_action_batch') return { choices: [{ message: { content: JSON.stringify({ actions: [action('create_item', { name: 'Coke' }), action('record_stock', { productId, quantity: 10, date: '2026-10-06' })] }) } }] };
@@ -154,7 +196,7 @@ test('agents prepare multiple independent changes and require an independent act
 test('morning brief consults stock, pricing, and supplier specialists', async () => {
   await withMockedServer((_url, body) => {
     const name = body.response_format.json_schema.name;
-    if (name === 'ledger_team_plan') return { choices: [{ message: { content: JSON.stringify({ views: ['overview'], search: null, from: null, to: null, prepareChange: false }) } }] };
+    if (name === 'ledger_team_plan') return { choices: [{ message: { content: JSON.stringify({ scope: 'shop', views: ['overview'], search: null, from: null, to: null, prepareChange: false }) } }] };
     if (name === 'ledger_specialist_finding') return { choices: [{ message: { content: JSON.stringify({ summary: 'Review current records before purchasing.', factIds: [] }) } }] };
     if (name === 'ledger_team_answer' || name === 'ledger_team_review') return { choices: [{ message: { content: JSON.stringify({ answer: 'Review Coke stock first, then check supplier prices and open claims.', factIds: [] }) } }] };
     throw new Error(`Unexpected model role: ${name}`);
