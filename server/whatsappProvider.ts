@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { AiError } from './openrouter.js';
+import { AiError } from './openai.js';
 import { normalizePhone } from './whatsappOrder.js';
 
 export type IncomingMessage = {

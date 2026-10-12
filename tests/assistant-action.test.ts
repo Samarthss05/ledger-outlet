@@ -15,15 +15,20 @@ const action = (kind: string, overrides: Record<string, unknown> = {}) => ({
 
 async function withMockedServer(mock: (url: string, body: any) => unknown, run: (state: { calls: string[]; writes: string[] }) => Promise<void>) {
   const originalFetch = globalThis.fetch;
-  const originalEnv = { SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY, OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY };
+  const originalEnv = { SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY, OPENAI_API_KEY: process.env.OPENAI_API_KEY };
   process.env.SUPABASE_URL = 'https://preview.supabase.co';
   process.env.SUPABASE_PUBLISHABLE_KEY = 'preview-public-key';
-  process.env.OPENROUTER_API_KEY = 'preview-key';
+  process.env.OPENAI_API_KEY = 'preview-key';
   const state = { calls: [] as string[], writes: [] as string[] };
   globalThis.fetch = async (input, init) => {
     const url = String(input);
-    if (url.includes('openrouter.ai')) {
+    if (url.includes('api.openai.com')) {
       const body = JSON.parse(String(init?.body));
+      assert.equal(url, 'https://api.openai.com/v1/chat/completions');
+      assert.equal(body.model, 'gpt-5.4-mini');
+      assert.equal(body.reasoning_effort, 'low');
+      assert.equal(body.provider, undefined);
+      assert.equal((init?.headers as Record<string, string>).Authorization, 'Bearer preview-key');
       const name = body.response_format?.json_schema?.name || 'unknown';
       state.calls.push(name);
       return respond(mock(url, body));

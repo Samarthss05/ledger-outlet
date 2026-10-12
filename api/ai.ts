@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
-import { AiError } from '../server/openrouter.js';
+import { AiError } from '../server/openai.js';
 import { handleLiveAi } from '../server/liveAi.js';
 
 export default async function handler(req:VercelRequest,res:VercelResponse) {

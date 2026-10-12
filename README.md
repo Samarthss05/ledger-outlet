@@ -1,6 +1,6 @@
 # ReStock by Ledger
 
-A TypeScript, React and Vite rebuild of the supplied Ledger Outlet prototype, branded as ReStock by Ledger using the supplied visual kit. Supabase provides persistent Postgres records and per-user sign-in. Vercel hosts the web app and a server-side AI function. The OpenRouter API key stays on the server.
+A TypeScript, React and Vite rebuild of the supplied Ledger Outlet prototype, branded as ReStock by Ledger using the supplied visual kit. Supabase provides persistent Postgres records and per-user sign-in. Vercel hosts the web app and a server-side AI function. The OpenAI API key stays on the server.
 
 The original vector logos and app icon from the ReStock brand package are in `public/brand/`. The interface uses the kit's Ink, Ledger Green, Light Green, Cream, Night, and Mint palette. The repository and deployment URL retain their existing technical names.
 
@@ -15,7 +15,7 @@ The original vector logos and app icon from the ReStock brand package are in `pu
 - Market & stock desk: comparable products across suppliers, normalized paid prices and quotes, end-of-day stock counts, daily usage/waste, lead-time-based reorder suggestions, and a source-backed buyer brief.
 - Optional Singapore Department of Statistics retail reference data from table M213761. It is clearly labelled as consumer retail context and never treated as a wholesale procurement benchmark.
 - Reviewable CSV imports for deliveries, usage, stock counts, and supplier quotes. File fingerprints prevent duplicate usage, quote, or delivery records on retry.
-- Photo invoice extraction for JPEG, PNG, or WebP images up to 1.5 MB. The image goes to OpenRouter only when the user presses Extract; an editable draft must be confirmed before it becomes a delivery. The image itself is not stored by ReStock.
+- Photo invoice extraction for JPEG, PNG, or WebP images up to 1.5 MB. The image goes to OpenAI only when the user presses Extract; an editable draft must be confirmed before it becomes a delivery. The image itself is not stored by ReStock.
 - An optional import of the prototype's 59 sample deliveries. Sample data is only added when an authenticated user selects **Import sample ledger**.
 - WhatsApp order desk: owner-number verification, supplier WhatsApp contacts and delivery schedules, a read-only message preview, account-specific item matching, supplier splits, owner confirmation, supplier order tracking, and classification of supplier replies. The Meta webhook and sender stay disabled until the Cloud API credentials and approved templates are configured.
 
@@ -37,7 +37,7 @@ Dedicated numbers are represented by a per-outlet Meta phone number ID in the se
 
 ## Setup
 
-Requires Node.js 22.12 or newer. Create a Supabase project, apply all files in `supabase/migrations/` in timestamp order with the Supabase migration tool, and copy `.env.example` to `.env` with the project's URL and publishable key. Never put a secret key or OpenRouter key in a `VITE_` variable.
+Requires Node.js 22.12 or newer. Create a Supabase project, apply all files in `supabase/migrations/` in timestamp order with the Supabase migration tool, and copy `.env.example` to `.env` with the project's URL and publishable key. Never put a secret key or OpenAI key in a `VITE_` variable.
 
 ```bash
 npm ci --legacy-peer-deps
@@ -47,7 +47,7 @@ npm run dev
 
 Open http://localhost:5173. Create an account and a ledger, then add suppliers, products, supplier items and deliveries. In **Market & stock**, set pack conversions, record supplier quotes, enter an end-of-day stock count, log daily usage, and set each supplier's delivery lead time. Seven distinct usage dates within 28 days, usage within the past three days, and a stock count within 14 days are required before the app estimates days of cover. Reorder quantities cover lead time, safety days, and one further week; review current stock and incoming orders before placing an order.
 
-To use AI, add `OPENROUTER_API_KEY` to the server environment and restart or redeploy. Chat, order parsing, invoice extraction, and AI prose remain unavailable until the key is supplied. Numeric price and restock calculations work without AI. The buyer brief falls back to a labelled rule-based summary until OpenRouter is configured; with the key, OpenRouter explains only the database-backed facts. `OPENROUTER_MODEL` should support structured output and image input for invoice extraction. `OPENROUTER_AGENT_MODEL` defaults to `openai/gpt-5.4` for the coordinator, specialists, reviewer, and proposed ledger edits; it must support structured output. The agent team reads account-scoped data on demand and can combine spend, deliveries, prices, stock, claims, catalog, and market views. Edits still require review and confirmation.
+To use AI, add `OPENAI_API_KEY` to the server environment and restart or redeploy. Chat, order parsing, invoice extraction, and AI prose remain unavailable until the key is supplied. Numeric price and restock calculations work without AI. The buyer brief falls back to a labelled rule-based summary until OpenAI is configured; with the key, OpenAI explains only the database-backed facts. `OPENAI_MODEL` should support structured output and image input for invoice extraction. `OPENAI_AGENT_MODEL` defaults to `gpt-5.4-mini` for the coordinator, specialists, reviewer, and proposed ledger edits; it must support structured output. The agent team reads account-scoped data on demand and can combine spend, deliveries, prices, stock, claims, catalog, and market views. Edits still require review and confirmation.
 
 In **Ask ledger**, try “compare Coke prices and stock,” “add Coke as an item and record a stock count,” or “record a sourced wholesale benchmark.” The team researches the relevant records, explains its specialists' findings, and proposes any requested changes. Check and fill missing supplier, product, pack size, price, source, date, and quantities in each review card, then select **Save to ledger**. No catalog or financial record is written when the agents merely propose an action. CSV imports and deletions remain in their dedicated workspace flows. Supplier order messaging happens through the WhatsApp flow above.
 
@@ -59,14 +59,14 @@ The Vercel project uses the Vite build and `api/ai.ts` serverless function. Set 
 
 - `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (browser-safe)
 - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` (server-side validation and RLS queries)
-- `OPENROUTER_API_KEY` (server-side only, add when available)
-- `OPENROUTER_MODEL`, `OPENROUTER_AGENT_MODEL`, and `APP_URL` (optional)
+- `OPENAI_API_KEY` (server-side only, add when available)
+- `OPENAI_MODEL`, `OPENAI_AGENT_MODEL`, and `APP_URL` (optional)
 - `SUPABASE_SECRET_KEY` (server-only, required for Meta webhook database writes; a legacy `SUPABASE_SERVICE_ROLE_KEY` also works)
 - `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_SHARED_PHONE_NUMBER_ID`, `WHATSAPP_GRAPH_VERSION`
 - `WHATSAPP_ORDER_TEMPLATE_NAME`, `WHATSAPP_OWNER_ALERT_TEMPLATE_NAME` and optional language codes
 - `WHATSAPP_WORKER_SECRET` for a trusted queue-drain scheduler
 
-The repository is connected to Vercel, so pushes to the default branch trigger deployments. Run `npm run build` before pushing. The app is usable without an OpenRouter key; AI calls explain what configuration is missing.
+The repository is connected to Vercel, so pushes to the default branch trigger deployments. Run `npm run build` before pushing. The app is usable without an OpenAI key; AI calls explain what configuration is missing.
 
 ## Data and security
 

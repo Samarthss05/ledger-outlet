@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { AiError } from './openrouter.js';
+import { AiError } from './openai.js';
 import { extractOutletOrder, validateOutletOrder, type OrderItem, type OrderSupplier } from './whatsappOrder.js';
 
 const schema = z.object({ accountId: z.string().uuid(), text: z.string().trim().min(3).max(2000) });

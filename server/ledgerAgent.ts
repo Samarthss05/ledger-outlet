@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { AiError } from './openrouter.js';
+import { AiError } from './openai.js';
 import { fetchRetailReferences } from './singstat.js';
 
 type Db = ReturnType<typeof createClient<any, 'public', 'public'>>;
